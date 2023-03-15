@@ -31,6 +31,7 @@ contract BridgeBase {
     }
 
     function burn(address to, uint256 amount) external {
+        require(msg.sender == admin, "only admin");
         token.burn(msg.sender, amount);
         emit Transfer(
             msg.sender,
@@ -64,5 +65,9 @@ contract BridgeBase {
             otherChainNonce,
             Step.Mint
         );
+    }
+
+    function getAdminAddress() external view returns (address) {
+        return admin;
     }
 }

@@ -30,3 +30,5 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
   console.log("Goerli bridge deployed " + ethBridge.address);
 };
+
+module.exports.tags = ["all", "bridge"];

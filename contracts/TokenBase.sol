@@ -17,12 +17,10 @@ contract TokenBase is ERC20 {
     }
 
     function mint(address to, uint256 amount) external {
-        require(msg.sender == admin, "only admin");
         _mint(to, amount);
     }
 
     function burn(address owner, uint256 amount) external {
-        require(msg.sender == admin, "only admin");
         _burn(owner, amount);
     }
 }

@@ -1,4 +1,5 @@
 require("hardhat-deploy");
+require("@nomiclabs/hardhat-waffle");
 require("dotenv").config();
 
 const MNEMONIC = process.env.MNEMONIC;
