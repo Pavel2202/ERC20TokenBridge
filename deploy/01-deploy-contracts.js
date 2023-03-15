@@ -1,18 +1,32 @@
-// const { artifacts } = require("hardhat");
+module.exports = async function ({ getNamedAccounts, deployments }) {
+  const { deploy } = deployments;
+  const { deployer } = await getNamedAccounts();
+  const chainId = network.config.chainId;
 
-// const TokenUSDC = artifacts.require("TokenUSDC.sol");
-// const BridgeEth = artifacts.
+  console.log(network.name);
+  const tokenUsdc = await deploy("TokenUSDC", {
+    from: deployer,
+    args: [],
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1,
+  });
+  console.log("USDC token deployed " + tokenUsdc.address);
 
-module.exports = async function (deployer, network, addresses) {
-    const tokenUsdc = await deploy("TokenUSDC");
+  const maticBridge = await deploy("BridgeMatic", {
+    from: deployer,
+    args: [tokenUsdc.address],
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1,
+  });
 
-    if (network == "mumbai") {
-        tokenUsdc.mint(addresses[0], 1000);
-        const maticBridge = await deploy("BridgeMatic");
-        await tokenUsdc.updateAdmin(maticBridge.address);
-    }
-    if (network == "goerli") {
-        const ethBridge = await deploy("BridgeEth");
-        await tokenUsdc.updateAdmin(ethBridge.address);
-    }
-}
+  console.log("Matic bridge deployed " + maticBridge.address);
+
+  const ethBridge = await deploy("BridgeEth", {
+    from: deployer,
+    args: [tokenUsdc.address],
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1,
+  });
+
+  console.log("Goerli bridge deployed " + ethBridge.address);
+};

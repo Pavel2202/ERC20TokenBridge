@@ -1,13 +1,14 @@
+require("hardhat-deploy");
 require("dotenv").config();
 
 const MNEMONIC = process.env.MNEMONIC;
 const PASS_PHRASE = process.env.PASS_PHRASE;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
 const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 
 module.exports = {
+  defaultNetwork: "hardhat",
   networks: {
     goerli: {
       chainId: 5,
@@ -32,6 +33,8 @@ module.exports = {
         count: 20,
         passphrase: PASS_PHRASE,
       },
+      gas: 2100000,
+      gasPrice: 8000000000,
     },
   },
   solidity: "0.8.19",
