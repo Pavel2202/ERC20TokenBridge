@@ -4,6 +4,8 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const chainId = network.config.chainId;
 
   console.log(network.name);
+  console.log(chainId);
+
   const tokenUsdc = await deploy("TokenUSDC", {
     from: deployer,
     args: [],
@@ -28,7 +30,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     waitConfirmations: network.config.blockConfirmations || 1,
   });
 
-  console.log("Goerli bridge deployed " + ethBridge.address);
+  console.log("Eth bridge deployed " + ethBridge.address);
 };
 
 module.exports.tags = ["all", "bridge"];
