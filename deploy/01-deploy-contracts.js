@@ -1,3 +1,5 @@
+const { ethers } = require("hardhat");
+
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
@@ -13,6 +15,12 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     waitConfirmations: network.config.blockConfirmations || 1,
   });
   console.log("USDC token deployed " + tokenUsdc.address);
+
+  const token = await ethers.getContract("TokenUSDC");
+  await token.setAdmin(deployer);
+  console.log("updated!");
+  console.log(await token.getAdmin());
+  console.log(deployer);
 
   const maticBridge = await deploy("BridgeMatic", {
     from: deployer,

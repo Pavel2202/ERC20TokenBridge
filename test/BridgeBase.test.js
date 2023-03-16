@@ -22,9 +22,9 @@ describe("BridgeBase", function () {
 
   describe("burn", function () {
     it("Burns token and emits event", async function () {
-      maticBridge.connect(deployerSigner).mint(deployer, 100, 0);
+      maticBridge.connect(deployerSigner).mint(deployer, deployer, 100, 0);
       await expect(
-        maticBridge.connect(deployerSigner).burn(deployer, 100)
+        maticBridge.connect(deployerSigner).burn(deployer, deployer, 100)
       ).to.emit(maticBridge, "Transfer");
     });
   });
@@ -32,7 +32,7 @@ describe("BridgeBase", function () {
   describe("mint", function () {
     it("Mints token and emits event", async function () {
       await expect(
-        maticBridge.connect(deployerSigner).mint(deployer, 100, 0)
+        maticBridge.connect(deployerSigner).mint(deployer, deployer, 100, 0)
       ).to.emit(maticBridge, "Transfer");
     });
   });
