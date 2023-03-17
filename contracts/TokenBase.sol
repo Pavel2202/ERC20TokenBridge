@@ -31,7 +31,11 @@ contract TokenBase is ERC20 {
         admin = _admin;
     }
 
-    function getAdmin() external view returns (address) {
+    function getAdminAddress() external view returns (address) {
         return admin;
+    }
+
+    function isAdminSet() external view returns (uint256) {
+        return adminSet;
     }
 }

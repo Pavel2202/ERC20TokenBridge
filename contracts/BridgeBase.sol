@@ -71,4 +71,12 @@ contract BridgeBase {
     function getAdminAddress() external view returns (address) {
         return admin;
     }
+
+    function getNonce() external view returns (uint256) {
+        return nonce;
+    }
+
+    function isNonceProcessed(uint256 _nonce) external view returns (bool) {
+        return processedNonces[_nonce];
+    }
 }

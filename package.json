@@ -3,7 +3,8 @@
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
     "ethers": "^5.7.2",
     "hardhat": "^2.13.0",
-    "hardhat-deploy": "^0.11.25"
+    "hardhat-deploy": "^0.11.25",
+    "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
     "@nomiclabs/hardhat-waffle": "^2.0.5",
