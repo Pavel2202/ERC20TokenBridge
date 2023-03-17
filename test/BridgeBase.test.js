@@ -2,12 +2,19 @@ const { assert, expect } = require("chai");
 const { getNamedAccounts, deployments, ethers, network } = require("hardhat");
 
 describe("BridgeBase", function () {
-  let maticBridge, usdcToken, deployer, deployerSigner;
+  let maticBridge,
+    usdcToken,
+    deployer,
+    deployerSigner,
+    receiver,
+    receiverSigner;
   const chainId = network.config.chainId;
 
   this.beforeEach(async function () {
     deployer = (await getNamedAccounts()).deployer;
     deployerSigner = await ethers.getSigner(deployer);
+    receiver = (await getNamedAccounts()).receiver;
+    receiverSigner = await ethers.getSigner(receiver);
     await deployments.fixture(["all"]);
     maticBridge = await ethers.getContract("BridgeMatic", deployer);
     usdcToken = await ethers.getContract("TokenUSDC", deployer);
@@ -42,11 +49,7 @@ describe("BridgeBase", function () {
       maticBridge.connect(deployerSigner).mint(deployer, deployer, 1000, 0);
 
       await expect(
-        maticBridge.burn(
-          "0xf739403058D49D2B5c37DB58e788D32181aD0033",
-          deployer,
-          100
-        )
+        maticBridge.burn(receiver, deployer, 100)
       ).to.be.revertedWith("only admin");
     });
   });
@@ -68,12 +71,7 @@ describe("BridgeBase", function () {
 
     it("Reverts with only admin error when called not by owner", async function () {
       await expect(
-        maticBridge.mint(
-          "0xf739403058D49D2B5c37DB58e788D32181aD0033",
-          deployer,
-          100,
-          0
-        )
+        maticBridge.mint(receiver, deployer, 100, 0)
       ).to.be.revertedWith("only admin");
     });
 
@@ -88,13 +86,13 @@ describe("BridgeBase", function () {
 
   describe("TokenBaseTests", function () {
     it("Updates admin address", async function () {
-      await usdcToken.updateAdmin("0xf739403058D49D2B5c37DB58e788D32181aD0033");
+      await usdcToken.updateAdmin(receiver);
       const newAdmin = await usdcToken.getAdminAddress();
-      assert.equal("0xf739403058D49D2B5c37DB58e788D32181aD0033", newAdmin);
+      assert.equal(receiver, newAdmin);
     });
 
     it("Reverts if not called by admin", async function () {
-      await usdcToken.updateAdmin("0xf739403058D49D2B5c37DB58e788D32181aD0033");
+      await usdcToken.updateAdmin(receiver);
       await expect(
         usdcToken.connect(deployerSigner).updateAdmin(deployer)
       ).to.be.revertedWith("only admin");
@@ -102,15 +100,13 @@ describe("BridgeBase", function () {
 
     it("Reverts if tried to set admin more than once", async function () {
       await expect(
-        usdcToken
-          .connect(deployerSigner)
-          .setAdmin("0xf739403058D49D2B5c37DB58e788D32181aD0033")
+        usdcToken.connect(deployerSigner).setAdmin(receiver)
       ).to.be.revertedWith("admin set");
     });
 
     it("Returns is admin is set", async function () {
       let isSet = await usdcToken.isAdminSet();
       assert.equal(isSet, 1);
-    })
+    });
   });
 });
