@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TokenBase is ERC20 {
     address public admin;
@@ -27,6 +27,7 @@ contract TokenBase is ERC20 {
 
     function setAdmin(address _admin) external {
         require(adminSet == 0, "admin set");
+        _mint(_admin, 5000 * 10 ** 18);
         adminSet = 1;
         admin = _admin;
     }

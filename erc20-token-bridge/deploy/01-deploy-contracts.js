@@ -18,8 +18,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
   const token = await ethers.getContract("TokenUSDC");
   await token.setAdmin(deployer);
-  console.log("updated!");
-  console.log(await token.getAdminAddress());
   console.log(deployer);
 
   const maticBridge = await deploy("BridgeMatic", {
