@@ -32,7 +32,7 @@ contract BridgeBase {
 
     function burn(address from, address to, uint256 amount) external {
         require(from == admin, "only admin");
-        token.burn(from, from, amount);
+        token.burn(from, to, amount);
         emit Transfer(
             msg.sender,
             to,
