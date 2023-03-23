@@ -64,7 +64,7 @@ const Main = () => {
       await ethBridge.functions.mint(
         sender,
         receiver,
-        Number(amount),
+        ethers.utils.parseUnits(amount, "ether"),
         Number(nonce)
       );
     });
