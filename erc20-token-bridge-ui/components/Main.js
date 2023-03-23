@@ -48,19 +48,6 @@ const Main = () => {
     };
   }
 
-  const addTokenValue = 5000000000;
-
-  const { runContractFunction: burn } = useWeb3Contract({
-    abi: abi,
-    contractAddress: ethBridgeAddress,
-    functionName: "burn",
-    params: {
-      from: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      to: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      amount: addTokenValue,
-    },
-  });
-
   const { runContractFunction: getNonce } = useWeb3Contract({
     abi: abi,
     contractAddress: ethBridgeAddress,
@@ -68,45 +55,65 @@ const Main = () => {
     params: {},
   });
 
-  async function listenToEvent() {
+  async function listenToEvent(sender, receiver, amount) {
     const nonce = await getNonce();
     console.log(nonce);
 
-    await ethBridge.once("Transfer", async (from, to, amount, step) => {
-      let data = {
-        from: from,
-        to: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        amount: Number(amount),
-        nonce: Number(nonce),
-      };
-      console.log(data);
+    await ethBridge.once("Transfer", async () => {
       console.log("mint");
       await ethBridge.functions.mint(
-        from,
-        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        sender,
+        receiver,
         Number(amount),
         Number(nonce)
       );
     });
   }
 
-  async function handleSuccess(tx) {
-    console.log("burn");
-    console.log(tx);
+  async function handleSuccess(tx, sender, receiver, amount) {
     await tx.wait(1);
-    console.log("waited");
-    await listenToEvent();
+    await listenToEvent(sender, receiver, amount);
     await tx.wait(1);
+    console.log("finighsed");
+  }
+
+  async function submitHandler(e) {
+    e.preventDefault();
+
+    let formData = new FormData(e.currentTarget);
+    let sender = formData.get("sender");
+    let receiver = formData.get("receiver");
+    let amount = formData.get("amount");
+
+    console.log(sender);
+    console.log(receiver);
+    console.log(amount);
+
+    let tx = await ethBridge.functions.burn(
+      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      sender,
+      amount
+    );
+
+    handleSuccess(tx, sender, receiver, amount);
   }
 
   return (
-    <button
-      onClick={async function () {
-        await burn({ onSuccess: handleSuccess });
-      }}
-    >
-      GetBalance
-    </button>
+    <form onSubmit={submitHandler}>
+      <label>Sender</label>
+      <input type="text" id="sender" name="sender" />
+      <br />
+
+      <label>Receiver</label>
+      <input type="text" id="receiver" name="receiver" />
+      <br />
+
+      <label>Amount</label>
+      <input type="text" id="amount" name="amount" />
+      <br />
+
+      <button>Submit</button>
+    </form>
   );
 };
 
