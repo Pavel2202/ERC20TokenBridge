@@ -1,7 +1,7 @@
-const contractAddresses = require("./contractAddresses.json");
-const abi = require("./abi.json");
+const ethBridgeContractAddresses = require("./contractAddresses.json");
+const ethBridgeAbi = require("./abi.json");
 
 module.exports = {
-  contractAddresses,
-  abi,
+  ethBridgeContractAddresses,
+  ethBridgeAbi,
 };

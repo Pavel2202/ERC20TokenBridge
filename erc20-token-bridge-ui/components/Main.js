@@ -1,16 +1,31 @@
 import { ethers } from "ethers";
-import { contractAddresses, abi } from "../constants/EthBridge";
+import {
+  ethBridgeContractAddresses,
+  ethBridgeAbi,
+} from "../constants/EthBridge";
+import {
+  maticBridgeContractAddresses,
+  maticBridgeAbi,
+} from "../constants/MaticBridge";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { useEffect, useState } from "react";
 
 const Main = () => {
   const [provider, setProvider] = useState();
   const [ethBridge, setEthBridge] = useState();
+  const [maticBridge, setMaticBridge] = useState();
 
   const { isWeb3Enabled, chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
+
   const ethBridgeAddress =
-    chainId in contractAddresses ? contractAddresses[chainId] : null;
+    chainId in ethBridgeContractAddresses
+      ? ethBridgeContractAddresses[chainId]
+      : null;
+  const maticridgeAddress =
+    chainId in maticBridgeContractAddresses
+      ? maticBridgeContractAddresses[chainId]
+      : null;
 
   useEffect(() => {
     if (isWeb3Enabled) {
@@ -21,9 +36,11 @@ const Main = () => {
 
         const providerCall = data[0].providerCall;
         const ethBridgeCall = data[0].ethBridgeCall;
+        const maticBridgeCall = data[0].maticBridgeCall;
 
         setProvider(providerCall);
         setEthBridge(ethBridgeCall);
+        setMaticBridge(maticBridgeCall);
       });
     }
   }, [isWeb3Enabled]);
@@ -34,34 +51,33 @@ const Main = () => {
     const providerCall = await new ethers.providers.Web3Provider(
       window.ethereum
     );
+
     const ethBridgeCall = await new ethers.Contract(
       ethBridgeAddress,
-      abi,
+      ethBridgeAbi,
       providerCall.getSigner()
     );
 
-    console.log(ethBridgeCall);
+    const maticBridgeCall = await new ethers.Contract(
+      maticridgeAddress,
+      maticBridgeAbi,
+      providerCall.getSigner()
+    );
 
     return {
       providerCall,
       ethBridgeCall,
+      maticBridgeCall,
     };
   }
 
-  const { runContractFunction: getNonce } = useWeb3Contract({
-    abi: abi,
-    contractAddress: ethBridgeAddress,
-    functionName: "getNonce",
-    params: {},
-  });
-
   async function listenToEvent(sender, receiver, amount) {
-    const nonce = await getNonce();
+    const nonce = await ethBridge.functions.getNonce();
     console.log(nonce);
 
     await ethBridge.once("Transfer", async () => {
       console.log("mint");
-      await ethBridge.functions.mint(
+      await maticBridge.functions.mint(
         sender,
         receiver,
         ethers.utils.parseUnits(amount, "ether"),
@@ -74,7 +90,7 @@ const Main = () => {
     await tx.wait(1);
     await listenToEvent(sender, receiver, amount);
     await tx.wait(1);
-    console.log("finighsed");
+    console.log("finished");
   }
 
   async function submitHandler(e) {
@@ -92,7 +108,7 @@ const Main = () => {
     let tx = await ethBridge.functions.burn(
       "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       sender,
-      amount
+      ethers.utils.parseUnits(amount, "ether")
     );
 
     handleSuccess(tx, sender, receiver, amount);

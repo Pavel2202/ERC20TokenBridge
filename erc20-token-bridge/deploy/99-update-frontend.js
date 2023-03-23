@@ -1,31 +1,31 @@
 const { ethers, network } = require("hardhat");
 const fs = require("fs");
 
-const FRONTEND_BRIDGE_ADDRESSES_FILE =
+const FRONTEND_ETH_BRIDGE_ADDRESSES_FILE =
   "../erc20-token-bridge-ui/constants/EthBridge/contractAddresses.json";
-const FRONTEND_BRIDGE_ABI_FILE =
+const FRONTEND_ETH_BRIDGE_ABI_FILE =
   "../erc20-token-bridge-ui/constants/EthBridge/abi.json";
 
-const FRONTEND_TOKEN_ADDRESSES_FILE =
-  "../erc20-token-bridge-ui/constants/TokenUSDC/contractAddresses.json";
-const FRONTEND_TOKEN_ABI_FILE =
-  "../erc20-token-bridge-ui/constants/TokenUSDC/abi.json";
+const FRONTEND_MATIC_BRIDGE_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/MaticBridge/contractAddresses.json";
+const FRONTEND_MATIC_BRIDGE_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/MaticBridge/abi.json";
 
 module.exports = async function () {
   if (process.env.UPDATE_FRONTEND) {
-    await updateBridgeContractAddresses();
-    await updateBridgeAbi();
+    await updateEthBridgeContractAddresses();
+    await updateEthBridgeAbi();
 
-    await updateTokenContractAddresses();
-    await updateTokenAbi();
+    await updateMaticBridgeContractAddresses();
+    await updateEthBridgeAbi();
   }
 };
 
-async function updateBridgeContractAddresses() {
+async function updateEthBridgeContractAddresses() {
   const ethBridge = await ethers.getContract("BridgeEth");
   const chainId = network.config.chainId.toString();
   const currentAddresses = JSON.parse(
-    fs.readFileSync(FRONTEND_BRIDGE_ADDRESSES_FILE, "utf8")
+    fs.readFileSync(FRONTEND_ETH_BRIDGE_ADDRESSES_FILE, "utf8")
   );
   if (chainId in currentAddresses) {
     if (!currentAddresses[chainId].includes(ethBridge.address)) {
@@ -37,45 +37,45 @@ async function updateBridgeContractAddresses() {
     currentAddresses[chainId] = ethBridge.address;
   }
   fs.writeFileSync(
-    FRONTEND_BRIDGE_ADDRESSES_FILE,
+    FRONTEND_ETH_BRIDGE_ADDRESSES_FILE,
     JSON.stringify(currentAddresses)
   );
 }
 
-async function updateTokenContractAddresses() {
-  const tokenUSDC = await ethers.getContract("TokenUSDC");
+async function updateMaticBridgeContractAddresses() {
+  const maticBridge = await ethers.getContract("BridgeMatic");
   const chainId = network.config.chainId.toString();
   const currentAddresses = JSON.parse(
-    fs.readFileSync(FRONTEND_TOKEN_ADDRESSES_FILE, "utf8")
+    fs.readFileSync(FRONTEND_MATIC_BRIDGE_ADDRESSES_FILE, "utf8")
   );
   if (chainId in currentAddresses) {
-    if (!currentAddresses[chainId].includes(tokenUSDC.address)) {
-      currentAddresses[chainId].push(tokenUSDC.address);
+    if (!currentAddresses[chainId].includes(maticBridge.address)) {
+      currentAddresses[chainId].push(maticBridge.address);
     }
   }
 
   {
-    currentAddresses[chainId] = tokenUSDC.address;
+    currentAddresses[chainId] = maticBridge.address;
   }
   fs.writeFileSync(
-    FRONTEND_TOKEN_ADDRESSES_FILE,
+    FRONTEND_MATIC_BRIDGE_ADDRESSES_FILE,
     JSON.stringify(currentAddresses)
   );
 }
 
-async function updateBridgeAbi() {
+async function updateEthBridgeAbi() {
   const ethBridge = await ethers.getContract("BridgeEth");
   fs.writeFileSync(
-    FRONTEND_BRIDGE_ABI_FILE,
+    FRONTEND_ETH_BRIDGE_ABI_FILE,
     ethBridge.interface.format(ethers.utils.FormatTypes.json)
   );
 }
 
-async function updateTokenAbi() {
-  const tokenUSDC = await ethers.getContract("TokenUSDC");
+async function updateEthBridgeAbi() {
+  const maticBridge = await ethers.getContract("BridgeMatic");
   fs.writeFileSync(
-    FRONTEND_TOKEN_ABI_FILE,
-    tokenUSDC.interface.format(ethers.utils.FormatTypes.json)
+    FRONTEND_MATIC_BRIDGE_ABI_FILE,
+    maticBridge.interface.format(ethers.utils.FormatTypes.json)
   );
 }
 
