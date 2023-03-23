@@ -11,19 +11,7 @@ contract BridgeBase {
     uint256 public nonce;
     mapping(uint256 => bool) public processedNonces;
 
-    enum Step {
-        Burn,
-        Mint
-    }
-
-    event Transfer(
-        address from,
-        address to,
-        uint256 amount,
-        uint256 date,
-        uint256 nonce,
-        Step indexed step
-    );
+    event Transfer(address from, address to, uint256 amount, uint256 step);
 
     constructor(address _token) {
         admin = msg.sender;
@@ -33,14 +21,7 @@ contract BridgeBase {
     function burn(address from, address to, uint256 amount) external {
         require(from == admin, "only admin");
         token.burn(from, to, amount);
-        emit Transfer(
-            msg.sender,
-            to,
-            amount,
-            block.timestamp,
-            nonce,
-            Step.Burn
-        );
+        emit Transfer(msg.sender, to, amount, 0);
         nonce++;
     }
 
@@ -58,14 +39,7 @@ contract BridgeBase {
         processedNonces[otherChainNonce] = true;
 
         token.mint(from, to, amount);
-        emit Transfer(
-            msg.sender,
-            to,
-            amount,
-            block.timestamp,
-            otherChainNonce,
-            Step.Mint
-        );
+        emit Transfer(msg.sender, to, amount, 1);
     }
 
     function getAdminAddress() external view returns (address) {
