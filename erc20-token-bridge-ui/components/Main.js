@@ -32,8 +32,6 @@ const Main = () => {
       const data = setup();
 
       Promise.all([data]).then((data) => {
-        console.log(data[0]);
-
         const providerCall = data[0].providerCall;
         const ethBridgeCall = data[0].ethBridgeCall;
         const maticBridgeCall = data[0].maticBridgeCall;
@@ -46,8 +44,6 @@ const Main = () => {
   }, [isWeb3Enabled]);
 
   async function setup() {
-    console.log("setup");
-
     const providerCall = await new ethers.providers.Web3Provider(
       window.ethereum
     );
@@ -71,26 +67,22 @@ const Main = () => {
     };
   }
 
-  async function listenToEvent(sender, receiver, amount) {
-    const nonce = await ethBridge.functions.getNonce();
-    console.log(nonce);
-
-    await ethBridge.once("Transfer", async () => {
-      console.log("mint");
-      await maticBridge.functions.mint(
+  async function listenToEvent(sender, receiver, amount, fromBridge, toBridge) {
+    const nonce = (await fromBridge.functions.getNonce()).toString();
+    await fromBridge.once("Transfer", async () => {
+      await toBridge.functions.mint(
         sender,
         receiver,
         ethers.utils.parseUnits(amount, "ether"),
-        Number(nonce)
+        ethers.BigNumber.from(nonce)
       );
     });
   }
 
-  async function handleSuccess(tx, sender, receiver, amount) {
+  async function handleSuccess(tx, sender, receiver, amount, fromBridge, toBridge) {
     await tx.wait(1);
-    await listenToEvent(sender, receiver, amount);
+    await listenToEvent(sender, receiver, amount, fromBridge, toBridge);
     await tx.wait(1);
-    console.log("finished");
   }
 
   async function submitHandler(e) {
@@ -100,33 +92,62 @@ const Main = () => {
     let sender = formData.get("sender");
     let receiver = formData.get("receiver");
     let amount = formData.get("amount");
+    let fromBridge = formData.get("fromBridge");
+    let toBridge = formData.get("toBridge");
 
-    console.log(sender);
-    console.log(receiver);
-    console.log(amount);
+    if (fromBridge == "ethBridge") {
+      fromBridge = ethBridge;
+    } else {
+      fromBridge = maticBridge;
+    }
 
-    let tx = await ethBridge.functions.burn(
+    if (toBridge == "ethBridge") {
+      toBridge = ethBridge;
+    } else {
+      toBridge = maticBridge;
+    }
+
+    let tx = await fromBridge.functions.burn(
       "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       sender,
       ethers.utils.parseUnits(amount, "ether")
     );
 
-    handleSuccess(tx, sender, receiver, amount);
+    handleSuccess(tx, sender, receiver, amount, fromBridge, toBridge);
   }
 
   return (
     <form onSubmit={submitHandler}>
-      <label>Sender</label>
-      <input type="text" id="sender" name="sender" />
-      <br />
+      <div>
+        Select from bridge:
+        <select name="fromBridge">
+          <option value="ethBridge">EthBridge</option>
+          <option value="maticBridge">MaticBridge</option>
+        </select>
+      </div>
 
-      <label>Receiver</label>
-      <input type="text" id="receiver" name="receiver" />
-      <br />
+      <div>
+        <label>Sender</label>
+        <input type="text" id="sender" name="sender" />
+      </div>
 
-      <label>Amount</label>
-      <input type="text" id="amount" name="amount" />
-      <br />
+      <div>
+        Select to bridge:
+        <select name="toBridge">
+          <option value="ethBridge">EthBridge</option>
+          <option value="maticBridge">MaticBridge</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Receiver</label>
+        <input type="text" id="receiver" name="receiver" />
+      </div>
+
+      <div>
+        <label>Amount</label>
+        <input type="text" id="amount" name="amount" />
+      </div>
 
       <button>Submit</button>
     </form>
