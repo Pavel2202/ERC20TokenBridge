@@ -9,7 +9,7 @@ contract BridgeBase {
     address public admin;
     IToken public token;
     uint256 public nonce;
-    mapping(uint256 => bool) public processedNonces;
+    mapping(address => mapping(uint256 => bool)) public processedNonces;
 
     event Transfer(address from, address to, uint256 amount, uint256 step);
 
@@ -29,14 +29,15 @@ contract BridgeBase {
         address from,
         address to,
         uint256 amount,
-        uint256 otherChainNonce
+        uint256 otherChainNonce,
+        address burnContractAddress
     ) external {
         require(from == admin, "only admin");
         require(
-            processedNonces[otherChainNonce] == false,
+            processedNonces[burnContractAddress][otherChainNonce] == false,
             "Transfer already processed."
         );
-        processedNonces[otherChainNonce] = true;
+        processedNonces[burnContractAddress][otherChainNonce] = true;
 
         token.mint(from, to, amount);
         emit Transfer(msg.sender, to, amount, 1);
@@ -48,9 +49,5 @@ contract BridgeBase {
 
     function getNonce() external view returns (uint256) {
         return nonce;
-    }
-
-    function isNonceProcessed(uint256 _nonce) external view returns (bool) {
-        return processedNonces[_nonce];
     }
 }

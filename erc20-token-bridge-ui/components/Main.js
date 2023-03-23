@@ -67,24 +67,6 @@ const Main = () => {
     };
   }
 
-  async function listenToEvent(sender, receiver, amount, fromBridge, toBridge) {
-    const nonce = (await fromBridge.functions.getNonce()).toString();
-    await fromBridge.once("Transfer", async () => {
-      await toBridge.functions.mint(
-        sender,
-        receiver,
-        ethers.utils.parseUnits(amount, "ether"),
-        ethers.BigNumber.from(nonce)
-      );
-    });
-  }
-
-  async function handleSuccess(tx, sender, receiver, amount, fromBridge, toBridge) {
-    await tx.wait(1);
-    await listenToEvent(sender, receiver, amount, fromBridge, toBridge);
-    await tx.wait(1);
-  }
-
   async function submitHandler(e) {
     e.preventDefault();
 
@@ -114,6 +96,32 @@ const Main = () => {
     );
 
     handleSuccess(tx, sender, receiver, amount, fromBridge, toBridge);
+  }
+
+  async function handleSuccess(
+    tx,
+    sender,
+    receiver,
+    amount,
+    fromBridge,
+    toBridge
+  ) {
+    await tx.wait(1);
+    await listenToEvent(sender, receiver, amount, fromBridge, toBridge);
+    await tx.wait(1);
+  }
+
+  async function listenToEvent(sender, receiver, amount, fromBridge, toBridge) {
+    const nonce = (await fromBridge.functions.getNonce()).toString();
+    await fromBridge.once("Transfer", async () => {
+      await toBridge.functions.mint(
+        sender,
+        receiver,
+        ethers.utils.parseUnits(amount, "ether"),
+        ethers.BigNumber.from(nonce),
+        fromBridge.address
+      );
+    });
   }
 
   return (
