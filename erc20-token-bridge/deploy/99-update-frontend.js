@@ -11,17 +11,20 @@ const FRONTEND_MATIC_BRIDGE_ADDRESSES_FILE =
 const FRONTEND_MATIC_BRIDGE_ABI_FILE =
   "../erc20-token-bridge-ui/constants/MaticBridge/abi.json";
 
+const FRONTEND_BSC_BRIDGE_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/BscBridge/contractAddresses.json";
+const FRONTEND_BSC_BRIDGE_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/BscBridge/abi.json";
+
 module.exports = async function () {
   if (process.env.UPDATE_FRONTEND) {
-    await updateEthBridgeContractAddresses();
-    await updateEthBridgeAbi();
-
-    await updateMaticBridgeContractAddresses();
-    await updateEthBridgeAbi();
+    await updateEthBridge();
+    await updateMaticBridge();
+    await updateBscBridge();
   }
 };
 
-async function updateEthBridgeContractAddresses() {
+async function updateEthBridge() {
   const ethBridge = await ethers.getContract("BridgeEth");
   const chainId = network.config.chainId.toString();
   const currentAddresses = JSON.parse(
@@ -40,9 +43,14 @@ async function updateEthBridgeContractAddresses() {
     FRONTEND_ETH_BRIDGE_ADDRESSES_FILE,
     JSON.stringify(currentAddresses)
   );
+
+  fs.writeFileSync(
+    FRONTEND_ETH_BRIDGE_ABI_FILE,
+    ethBridge.interface.format(ethers.utils.FormatTypes.json)
+  );
 }
 
-async function updateMaticBridgeContractAddresses() {
+async function updateMaticBridge() {
   const maticBridge = await ethers.getContract("BridgeMatic");
   const chainId = network.config.chainId.toString();
   const currentAddresses = JSON.parse(
@@ -61,21 +69,36 @@ async function updateMaticBridgeContractAddresses() {
     FRONTEND_MATIC_BRIDGE_ADDRESSES_FILE,
     JSON.stringify(currentAddresses)
   );
-}
 
-async function updateEthBridgeAbi() {
-  const ethBridge = await ethers.getContract("BridgeEth");
-  fs.writeFileSync(
-    FRONTEND_ETH_BRIDGE_ABI_FILE,
-    ethBridge.interface.format(ethers.utils.FormatTypes.json)
-  );
-}
-
-async function updateEthBridgeAbi() {
-  const maticBridge = await ethers.getContract("BridgeMatic");
   fs.writeFileSync(
     FRONTEND_MATIC_BRIDGE_ABI_FILE,
     maticBridge.interface.format(ethers.utils.FormatTypes.json)
+  );
+}
+
+async function updateBscBridge() {
+  const bscBridge = await ethers.getContract("BridgeBsc");
+  const chainId = network.config.chainId.toString();
+  const currentAddresses = JSON.parse(
+    fs.readFileSync(FRONTEND_BSC_BRIDGE_ADDRESSES_FILE, "utf8")
+  );
+  if (chainId in currentAddresses) {
+    if (!currentAddresses[chainId].includes(bscBridge.address)) {
+      currentAddresses[chainId].push(bscBridge.address);
+    }
+  }
+
+  {
+    currentAddresses[chainId] = bscBridge.address;
+  }
+  fs.writeFileSync(
+    FRONTEND_BSC_BRIDGE_ADDRESSES_FILE,
+    JSON.stringify(currentAddresses)
+  );
+
+  fs.writeFileSync(
+    FRONTEND_BSC_BRIDGE_ABI_FILE,
+    bscBridge.interface.format(ethers.utils.FormatTypes.json)
   );
 }
 

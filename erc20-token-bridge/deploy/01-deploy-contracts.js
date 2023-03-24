@@ -5,9 +5,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId;
 
-  console.log(network.name);
-  console.log(chainId);
-
   const tokenUsdc = await deploy("TokenUSDC", {
     from: deployer,
     args: [],
@@ -18,7 +15,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
   const token = await ethers.getContract("TokenUSDC");
   await token.setAdmin(deployer);
-  console.log(deployer);
 
   const maticBridge = await deploy("BridgeMatic", {
     from: deployer,
@@ -37,6 +33,15 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   });
 
   console.log("Eth bridge deployed " + ethBridge.address);
+
+  const bscBridge = await deploy("BridgeBsc", {
+    from: deployer,
+    args: [tokenUsdc.address],
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1,
+  });
+
+  console.log("Bsc bridge deployed " + bscBridge.address);
 };
 
 module.exports.tags = ["all", "bridge"];

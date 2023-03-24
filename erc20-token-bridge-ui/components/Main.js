@@ -7,6 +7,10 @@ import {
   maticBridgeContractAddresses,
   maticBridgeAbi,
 } from "../constants/MaticBridge";
+import {
+  bscBridgeContractAddresses,
+  bscBridgeAbi,
+} from "../constants/BscBridge";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { useEffect, useState } from "react";
 
@@ -14,6 +18,7 @@ const Main = () => {
   const [provider, setProvider] = useState();
   const [ethBridge, setEthBridge] = useState();
   const [maticBridge, setMaticBridge] = useState();
+  const [bscBridge, setBscBridge] = useState();
 
   const { isWeb3Enabled, chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
@@ -22,9 +27,13 @@ const Main = () => {
     chainId in ethBridgeContractAddresses
       ? ethBridgeContractAddresses[chainId]
       : null;
-  const maticridgeAddress =
+  const maticBridgeAddress =
     chainId in maticBridgeContractAddresses
       ? maticBridgeContractAddresses[chainId]
+      : null;
+  const bscBridgeAddress =
+    chainId in bscBridgeContractAddresses
+      ? bscBridgeContractAddresses[chainId]
       : null;
 
   useEffect(() => {
@@ -35,10 +44,12 @@ const Main = () => {
         const providerCall = data[0].providerCall;
         const ethBridgeCall = data[0].ethBridgeCall;
         const maticBridgeCall = data[0].maticBridgeCall;
+        const bscBridgeCall = data[0].bscBridgeCall;
 
         setProvider(providerCall);
         setEthBridge(ethBridgeCall);
         setMaticBridge(maticBridgeCall);
+        setBscBridge(bscBridgeCall);
       });
     }
   }, [isWeb3Enabled]);
@@ -55,8 +66,14 @@ const Main = () => {
     );
 
     const maticBridgeCall = await new ethers.Contract(
-      maticridgeAddress,
+      maticBridgeAddress,
       maticBridgeAbi,
+      providerCall.getSigner()
+    );
+
+    const bscBridgeCall = await new ethers.Contract(
+      bscBridgeAddress,
+      bscBridgeAbi,
       providerCall.getSigner()
     );
 
@@ -64,6 +81,7 @@ const Main = () => {
       providerCall,
       ethBridgeCall,
       maticBridgeCall,
+      bscBridgeCall,
     };
   }
 
@@ -77,16 +95,23 @@ const Main = () => {
     let fromBridge = formData.get("fromBridge");
     let toBridge = formData.get("toBridge");
 
+    console.log(fromBridge);
+    console.log(toBridge);
+
     if (fromBridge == "ethBridge") {
       fromBridge = ethBridge;
-    } else {
+    } else if (fromBridge == "maticBridge") {
       fromBridge = maticBridge;
+    } else if (fromBridge == "bscBridge") {
+      fromBridge = bscBridge;
     }
 
     if (toBridge == "ethBridge") {
       toBridge = ethBridge;
-    } else {
+    } else if (toBridge == "maticBridge") {
       toBridge = maticBridge;
+    } else if (toBridge == "bscBridge") {
+      toBridge = bscBridge;
     }
 
     let tx = await fromBridge.functions.burn(
@@ -131,6 +156,7 @@ const Main = () => {
         <select name="fromBridge">
           <option value="ethBridge">EthBridge</option>
           <option value="maticBridge">MaticBridge</option>
+          <option value="bscBridge">BscBridge</option>
         </select>
       </div>
 
@@ -144,6 +170,7 @@ const Main = () => {
         <select name="toBridge">
           <option value="ethBridge">EthBridge</option>
           <option value="maticBridge">MaticBridge</option>
+          <option value="bscBridge">BscBridge</option>
         </select>
       </div>
 
