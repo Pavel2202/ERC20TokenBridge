@@ -18,28 +18,25 @@ contract BridgeBase {
         token = IToken(_token);
     }
 
-    function burn(address from, address to, uint256 amount) external {
-        require(from == admin, "only admin");
-        token.burn(from, to, amount);
+    function burn(address to, uint256 amount) external {
+        token.burn(to, amount);
         emit Transfer(msg.sender, to, amount, 0);
         nonce++;
     }
 
     function mint(
-        address from,
         address to,
         uint256 amount,
         uint256 otherChainNonce,
         address burnContractAddress
     ) external {
-        require(from == admin, "only admin");
         require(
             processedNonces[burnContractAddress][otherChainNonce] == false,
             "Transfer already processed."
         );
         processedNonces[burnContractAddress][otherChainNonce] = true;
 
-        token.mint(from, to, amount);
+        token.mint(to, amount);
         emit Transfer(msg.sender, to, amount, 1);
     }
 

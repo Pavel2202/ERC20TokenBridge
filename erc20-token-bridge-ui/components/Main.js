@@ -89,14 +89,11 @@ const Main = () => {
     e.preventDefault();
 
     let formData = new FormData(e.currentTarget);
-    let sender = formData.get("sender");
+    let sender = ethereum.selectedAddress;
     let receiver = formData.get("receiver");
     let amount = formData.get("amount");
     let fromBridge = formData.get("fromBridge");
     let toBridge = formData.get("toBridge");
-
-    console.log(fromBridge);
-    console.log(toBridge);
 
     if (fromBridge == "ethBridge") {
       fromBridge = ethBridge;
@@ -115,7 +112,6 @@ const Main = () => {
     }
 
     let tx = await fromBridge.functions.burn(
-      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       sender,
       ethers.utils.parseUnits(amount, "ether")
     );
@@ -140,7 +136,6 @@ const Main = () => {
     const nonce = (await fromBridge.functions.getNonce()).toString();
     await fromBridge.once("Transfer", async () => {
       await toBridge.functions.mint(
-        sender,
         receiver,
         ethers.utils.parseUnits(amount, "ether"),
         ethers.BigNumber.from(nonce),
@@ -150,42 +145,57 @@ const Main = () => {
   }
 
   return (
-    <form onSubmit={submitHandler}>
-      <div>
-        Select from bridge:
-        <select name="fromBridge">
-          <option value="ethBridge">EthBridge</option>
-          <option value="maticBridge">MaticBridge</option>
-          <option value="bscBridge">BscBridge</option>
-        </select>
-      </div>
+    <>
+      <form onSubmit={submitHandler}>
+        <div>
+          Select from bridge:
+          <select name="fromBridge">
+            <option value="ethBridge">Ethereum</option>
+            <option value="maticBridge">Polygon</option>
+            <option value="bscBridge">Binace Smart Chain</option>
+          </select>
+        </div>
 
-      <div>
-        <label>Sender</label>
-        <input type="text" id="sender" name="sender" />
-      </div>
+        <div>
+          Select to bridge:
+          <select name="toBridge">
+            <option value="ethBridge">Ethereum</option>
+            <option value="maticBridge">Polygon</option>
+            <option value="bscBridge">Binace Smart Chain</option>
+          </select>
+        </div>
 
-      <div>
-        Select to bridge:
-        <select name="toBridge">
-          <option value="ethBridge">EthBridge</option>
-          <option value="maticBridge">MaticBridge</option>
-          <option value="bscBridge">BscBridge</option>
-        </select>
-      </div>
+        <div>
+          <label>Receiver</label>
+          <input type="text" id="receiver" name="receiver" />
+        </div>
 
-      <div>
-        <label>Receiver</label>
-        <input type="text" id="receiver" name="receiver" />
-      </div>
+        <div>
+          <label>Amount</label>
+          <input type="text" id="amount" name="amount" />
+        </div>
 
-      <div>
-        <label>Amount</label>
-        <input type="text" id="amount" name="amount" />
-      </div>
+        <button>Submit</button>
+      </form>
 
-      <button>Submit</button>
-    </form>
+      <button
+        onClick={async function () {
+          const sender = ethereum.selectedAddress;
+          const nonce = Math.ceil(Math.random() * 100000);
+
+          let tx = await ethBridge.functions.mint(
+            sender,
+            ethers.utils.parseUnits("500", "ether"),
+            ethers.BigNumber.from(nonce),
+            "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+          );
+
+          await tx.wait(1);
+        }}
+      >
+        Faucet
+      </button>
+    </>
   );
 };
 

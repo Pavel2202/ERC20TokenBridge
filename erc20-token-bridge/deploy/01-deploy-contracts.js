@@ -13,9 +13,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   });
   console.log("USDC token deployed " + tokenUsdc.address);
 
-  const token = await ethers.getContract("TokenUSDC");
-  await token.setAdmin(deployer);
-
   const maticBridge = await deploy("BridgeMatic", {
     from: deployer,
     args: [tokenUsdc.address],
