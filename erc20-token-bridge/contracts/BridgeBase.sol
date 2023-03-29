@@ -19,7 +19,7 @@ contract BridgeBase {
     }
 
     function burn(address to, uint256 amount) external {
-        token.burn(to, amount);
+        token.burn(msg.sender, to, amount);
         emit Transfer(msg.sender, to, amount, 0);
         nonce++;
     }
@@ -36,7 +36,7 @@ contract BridgeBase {
         );
         processedNonces[burnContractAddress][otherChainNonce] = true;
 
-        token.mint(to, amount);
+        token.mint(msg.sender, to, amount);
         emit Transfer(msg.sender, to, amount, 1);
     }
 
