@@ -88,19 +88,16 @@ const Main = () => {
   async function submitHandler(e) {
     e.preventDefault();
 
-    let formData = new FormData(e.currentTarget);
     let sender = ethereum.selectedAddress;
+    let fromBridge;
+
+    let formData = new FormData(e.currentTarget);
     let receiver = formData.get("receiver");
     let amount = formData.get("amount");
-    let fromBridge = formData.get("fromBridge");
     let toBridge = formData.get("toBridge");
 
-    if (fromBridge == "ethBridge") {
+    if (chainId === 31337) {
       fromBridge = ethBridge;
-    } else if (fromBridge == "maticBridge") {
-      fromBridge = maticBridge;
-    } else if (fromBridge == "bscBridge") {
-      fromBridge = bscBridge;
     }
 
     if (toBridge == "ethBridge") {
@@ -153,15 +150,6 @@ const Main = () => {
     <>
       <form onSubmit={submitHandler}>
         <div>
-          Select from bridge:
-          <select name="fromBridge">
-            <option value="ethBridge">Ethereum</option>
-            <option value="maticBridge">Polygon</option>
-            <option value="bscBridge">Binace Smart Chain</option>
-          </select>
-        </div>
-
-        <div>
           Select to bridge:
           <select name="toBridge">
             <option value="ethBridge">Ethereum</option>
@@ -191,7 +179,6 @@ const Main = () => {
           const admin = (
             await ethBridge.functions.getAdminAddress()
           ).toString();
-          console.log(admin);
 
           let tx = await ethBridge.functions.mint(
             admin,
