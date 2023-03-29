@@ -18,13 +18,14 @@ contract BridgeBase {
         token = IToken(_token);
     }
 
-    function burn(address to, uint256 amount) external {
-        token.burn(msg.sender, to, amount);
-        emit Transfer(msg.sender, to, amount, 0);
+    function burn(address caller, address to, uint256 amount) external {
+        token.burn(caller, to, amount);
+        emit Transfer(caller, to, amount, 0);
         nonce++;
     }
 
     function mint(
+        address caller,
         address to,
         uint256 amount,
         uint256 otherChainNonce,
@@ -36,8 +37,8 @@ contract BridgeBase {
         );
         processedNonces[burnContractAddress][otherChainNonce] = true;
 
-        token.mint(msg.sender, to, amount);
-        emit Transfer(msg.sender, to, amount, 1);
+        token.mint(caller, to, amount);
+        emit Transfer(caller, to, amount, 1);
     }
 
     function getAdminAddress() external view returns (address) {

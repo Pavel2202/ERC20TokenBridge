@@ -111,7 +111,10 @@ const Main = () => {
       toBridge = bscBridge;
     }
 
+    const admin = (await fromBridge.functions.getAdminAddress()).toString();
+
     let tx = await fromBridge.functions.burn(
+      admin,
       sender,
       ethers.utils.parseUnits(amount, "ether")
     );
@@ -133,9 +136,11 @@ const Main = () => {
   }
 
   async function listenToEvent(sender, receiver, amount, fromBridge, toBridge) {
+    const admin = (await toBridge.functions.getAdminAddress()).toString();
     const nonce = (await fromBridge.functions.getNonce()).toString();
     await fromBridge.once("Transfer", async () => {
       await toBridge.functions.mint(
+        admin,
         receiver,
         ethers.utils.parseUnits(amount, "ether"),
         ethers.BigNumber.from(nonce),
@@ -183,7 +188,13 @@ const Main = () => {
           const sender = ethereum.selectedAddress;
           const nonce = Math.ceil(Math.random() * 100000);
 
+          const admin = (
+            await ethBridge.functions.getAdminAddress()
+          ).toString();
+          console.log(admin);
+
           let tx = await ethBridge.functions.mint(
+            admin,
             sender,
             ethers.utils.parseUnits("500", "ether"),
             ethers.BigNumber.from(nonce),
