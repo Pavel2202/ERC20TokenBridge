@@ -5,5 +5,5 @@ pragma solidity ^0.8.19;
 import "./BridgeBase.sol";
 
 contract BridgeBsc is BridgeBase {
-    constructor(address token) BridgeBase(token) {}
+    constructor() BridgeBase() {}
 }

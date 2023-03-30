@@ -13,9 +13,8 @@ contract BridgeBase {
 
     event Transfer(address from, address to, uint256 amount, uint256 step);
 
-    constructor(address _token) {
+    constructor() {
         admin = msg.sender;
-        token = IToken(_token);
     }
 
     function burn(address caller, address to, uint256 amount) external {
@@ -39,6 +38,10 @@ contract BridgeBase {
 
         token.mint(caller, to, amount);
         emit Transfer(caller, to, amount, 1);
+    }
+
+    function setToken(address tokenAddress) external {
+        token = IToken(tokenAddress);
     }
 
     function getAdminAddress() external view returns (address) {

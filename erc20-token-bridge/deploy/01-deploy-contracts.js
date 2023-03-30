@@ -15,7 +15,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
   const maticBridge = await deploy("BridgeMatic", {
     from: deployer,
-    args: [tokenUsdc.address],
+    args: [],
     log: true,
     waitConfirmations: network.config.blockConfirmations || 1,
   });
@@ -24,7 +24,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
   const ethBridge = await deploy("BridgeEth", {
     from: deployer,
-    args: [tokenUsdc.address],
+    args: [],
     log: true,
     waitConfirmations: network.config.blockConfirmations || 1,
   });
@@ -33,7 +33,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
   const bscBridge = await deploy("BridgeBsc", {
     from: deployer,
-    args: [tokenUsdc.address],
+    args: [],
     log: true,
     waitConfirmations: network.config.blockConfirmations || 1,
   });

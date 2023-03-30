@@ -11,6 +11,10 @@ import {
   bscBridgeContractAddresses,
   bscBridgeAbi,
 } from "../constants/BscBridge";
+import {
+  tokenUsdcContractAddresses,
+  tokenUsdcAbi,
+} from "@/constants/TokenUsdc";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { useEffect, useState } from "react";
 
@@ -19,6 +23,7 @@ const Main = () => {
   const [ethBridge, setEthBridge] = useState();
   const [maticBridge, setMaticBridge] = useState();
   const [bscBridge, setBscBridge] = useState();
+  const [tokenUsdc, setTokenUsdc] = useState();
 
   const { isWeb3Enabled, chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
@@ -35,6 +40,10 @@ const Main = () => {
     chainId in bscBridgeContractAddresses
       ? bscBridgeContractAddresses[chainId]
       : null;
+  const tokenUsdcAddress =
+    chainId in tokenUsdcContractAddresses
+      ? tokenUsdcContractAddresses[chainId]
+      : null;
 
   useEffect(() => {
     if (isWeb3Enabled) {
@@ -45,11 +54,13 @@ const Main = () => {
         const ethBridgeCall = data[0].ethBridgeCall;
         const maticBridgeCall = data[0].maticBridgeCall;
         const bscBridgeCall = data[0].bscBridgeCall;
+        const tokenUsdcCall = data[0].tokenUsdcCall;
 
         setProvider(providerCall);
         setEthBridge(ethBridgeCall);
         setMaticBridge(maticBridgeCall);
         setBscBridge(bscBridgeCall);
+        setTokenUsdc(tokenUsdcCall);
       });
     }
   }, [isWeb3Enabled]);
@@ -77,11 +88,18 @@ const Main = () => {
       providerCall.getSigner()
     );
 
+    const tokenUsdcCall = await new ethers.Contract(
+      tokenUsdcAddress,
+      tokenUsdcAbi,
+      providerCall.getSigner()
+    );
+
     return {
       providerCall,
       ethBridgeCall,
       maticBridgeCall,
       bscBridgeCall,
+      tokenUsdcCall,
     };
   }
 
@@ -95,6 +113,7 @@ const Main = () => {
     let receiver = formData.get("receiver");
     let amount = formData.get("amount");
     let toBridge = formData.get("toBridge");
+    let token = formData.get("token");
 
     if (chainId === 31337) {
       fromBridge = ethBridge;
@@ -107,6 +126,13 @@ const Main = () => {
     } else if (toBridge == "bscBridge") {
       toBridge = bscBridge;
     }
+
+    if (token == "usdc") {
+      token = tokenUsdc;
+    }
+
+    await fromBridge.functions.setToken(tokenUsdc.address);
+    await toBridge.functions.setToken(tokenUsdc.address);
 
     const admin = (await fromBridge.functions.getAdminAddress()).toString();
 
@@ -159,6 +185,12 @@ const Main = () => {
         </div>
 
         <div>
+          <select name="token">
+            <option value="usdc">TokenUSDC</option>
+          </select>
+        </div>
+
+        <div>
           <label>Receiver</label>
           <input type="text" id="receiver" name="receiver" />
         </div>
@@ -179,6 +211,8 @@ const Main = () => {
           const admin = (
             await ethBridge.functions.getAdminAddress()
           ).toString();
+
+          await ethBridge.functions.setToken("0x5FbDB2315678afecb367f032d93F642f64180aa3");
 
           let tx = await ethBridge.functions.mint(
             admin,

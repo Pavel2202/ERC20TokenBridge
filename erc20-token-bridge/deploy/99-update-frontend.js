@@ -16,11 +16,17 @@ const FRONTEND_BSC_BRIDGE_ADDRESSES_FILE =
 const FRONTEND_BSC_BRIDGE_ABI_FILE =
   "../erc20-token-bridge-ui/constants/BscBridge/abi.json";
 
+const FRONTEND_TOKEN_USDC_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/TokenUsdc/contractAddresses.json";
+const FRONTEND_TOKEN_USDC_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/TokenUsdc/abi.json";
+
 module.exports = async function () {
   if (process.env.UPDATE_FRONTEND) {
     await updateEthBridge();
     await updateMaticBridge();
     await updateBscBridge();
+    await updateTokenUsdc();
   }
 };
 
@@ -99,6 +105,32 @@ async function updateBscBridge() {
   fs.writeFileSync(
     FRONTEND_BSC_BRIDGE_ABI_FILE,
     bscBridge.interface.format(ethers.utils.FormatTypes.json)
+  );
+}
+
+async function updateTokenUsdc() {
+  const tokenUsdc = await ethers.getContract("TokenUSDC");
+  const chainId = network.config.chainId.toString();
+  const currentAddresses = JSON.parse(
+    fs.readFileSync(FRONTEND_TOKEN_USDC_ADDRESSES_FILE, "utf8")
+  );
+  if (chainId in currentAddresses) {
+    if (!currentAddresses[chainId].includes(tokenUsdc.address)) {
+      currentAddresses[chainId].push(tokenUsdc.address);
+    }
+  }
+
+  {
+    currentAddresses[chainId] = tokenUsdc.address;
+  }
+  fs.writeFileSync(
+    FRONTEND_TOKEN_USDC_ADDRESSES_FILE,
+    JSON.stringify(currentAddresses)
+  );
+
+  fs.writeFileSync(
+    FRONTEND_TOKEN_USDC_ABI_FILE,
+    tokenUsdc.interface.format(ethers.utils.FormatTypes.json)
   );
 }
 
