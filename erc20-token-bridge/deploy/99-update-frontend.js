@@ -21,12 +21,18 @@ const FRONTEND_TOKEN_USDC_ADDRESSES_FILE =
 const FRONTEND_TOKEN_USDC_ABI_FILE =
   "../erc20-token-bridge-ui/constants/TokenUsdc/abi.json";
 
+const FRONTEND_TOKEN_SHARK_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/TokenShark/contractAddresses.json";
+const FRONTEND_TOKEN_SHARK_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/TokenShark/abi.json";
+
 module.exports = async function () {
   if (process.env.UPDATE_FRONTEND) {
     await updateEthBridge();
     await updateMaticBridge();
     await updateBscBridge();
     await updateTokenUsdc();
+    await updateTokenShark();
   }
 };
 
@@ -131,6 +137,32 @@ async function updateTokenUsdc() {
   fs.writeFileSync(
     FRONTEND_TOKEN_USDC_ABI_FILE,
     tokenUsdc.interface.format(ethers.utils.FormatTypes.json)
+  );
+}
+
+async function updateTokenShark() {
+  const tokenShark = await ethers.getContract("TokenShark");
+  const chainId = network.config.chainId.toString();
+  const currentAddresses = JSON.parse(
+    fs.readFileSync(FRONTEND_TOKEN_SHARK_ADDRESSES_FILE, "utf8")
+  );
+  if (chainId in currentAddresses) {
+    if (!currentAddresses[chainId].includes(tokenShark.address)) {
+      currentAddresses[chainId].push(tokenShark.address);
+    }
+  }
+
+  {
+    currentAddresses[chainId] = tokenShark.address;
+  }
+  fs.writeFileSync(
+    FRONTEND_TOKEN_SHARK_ADDRESSES_FILE,
+    JSON.stringify(currentAddresses)
+  );
+
+  fs.writeFileSync(
+    FRONTEND_TOKEN_SHARK_ABI_FILE,
+    tokenShark.interface.format(ethers.utils.FormatTypes.json)
   );
 }
 

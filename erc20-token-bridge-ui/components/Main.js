@@ -15,6 +15,10 @@ import {
   tokenUsdcContractAddresses,
   tokenUsdcAbi,
 } from "@/constants/TokenUsdc";
+import {
+  tokenSharkContractAddresses,
+  tokenSharkAbi,
+} from "@/constants/TokenShark";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { useEffect, useState } from "react";
 
@@ -24,6 +28,7 @@ const Main = () => {
   const [maticBridge, setMaticBridge] = useState();
   const [bscBridge, setBscBridge] = useState();
   const [tokenUsdc, setTokenUsdc] = useState();
+  const [tokenShark, setTokenShark] = useState();
 
   const { isWeb3Enabled, chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
@@ -44,6 +49,10 @@ const Main = () => {
     chainId in tokenUsdcContractAddresses
       ? tokenUsdcContractAddresses[chainId]
       : null;
+  const tokenSharkAddress =
+    chainId in tokenSharkContractAddresses
+      ? tokenSharkContractAddresses[chainId]
+      : null;
 
   useEffect(() => {
     if (isWeb3Enabled) {
@@ -55,12 +64,14 @@ const Main = () => {
         const maticBridgeCall = data[0].maticBridgeCall;
         const bscBridgeCall = data[0].bscBridgeCall;
         const tokenUsdcCall = data[0].tokenUsdcCall;
+        const tokenSharkCall = data[0].tokenSharkCall;
 
         setProvider(providerCall);
         setEthBridge(ethBridgeCall);
         setMaticBridge(maticBridgeCall);
         setBscBridge(bscBridgeCall);
         setTokenUsdc(tokenUsdcCall);
+        setTokenShark(tokenSharkCall);
       });
     }
   }, [isWeb3Enabled]);
@@ -94,12 +105,19 @@ const Main = () => {
       providerCall.getSigner()
     );
 
+    const tokenSharkCall = await new ethers.Contract(
+      tokenSharkAddress,
+      tokenSharkAbi,
+      providerCall.getSigner()
+    );
+
     return {
       providerCall,
       ethBridgeCall,
       maticBridgeCall,
       bscBridgeCall,
       tokenUsdcCall,
+      tokenSharkCall,
     };
   }
 
@@ -129,10 +147,12 @@ const Main = () => {
 
     if (token == "usdc") {
       token = tokenUsdc;
+    } else if (token == "shark") {
+      token = tokenShark;
     }
 
-    await fromBridge.functions.setToken(tokenUsdc.address);
-    await toBridge.functions.setToken(tokenUsdc.address);
+    await fromBridge.functions.setToken(token.address);
+    await toBridge.functions.setToken(token.address);
 
     const admin = (await fromBridge.functions.getAdminAddress()).toString();
 
@@ -187,6 +207,7 @@ const Main = () => {
         <div>
           <select name="token">
             <option value="usdc">TokenUSDC</option>
+            <option value="shark">Shark Token</option>
           </select>
         </div>
 
@@ -212,7 +233,9 @@ const Main = () => {
             await ethBridge.functions.getAdminAddress()
           ).toString();
 
-          await ethBridge.functions.setToken("0x5FbDB2315678afecb367f032d93F642f64180aa3");
+          await ethBridge.functions.setToken(
+            "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+          );
 
           let tx = await ethBridge.functions.mint(
             admin,

@@ -11,7 +11,17 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     log: true,
     waitConfirmations: network.config.blockConfirmations || 1,
   });
+
   console.log("USDC token deployed " + tokenUsdc.address);
+
+  const tokenShark = await deploy("TokenShark", {
+    from: deployer,
+    args: [],
+    log: true,
+    waitConfirmations: network.config.blockConfirmations || 1,
+  });
+
+  console.log("Shark token deployed " + tokenShark.address);
 
   const maticBridge = await deploy("BridgeMatic", {
     from: deployer,
