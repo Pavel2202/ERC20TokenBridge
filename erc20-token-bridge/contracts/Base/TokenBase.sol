@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TokenBase is ERC20 {
     address public admin;
@@ -16,13 +16,13 @@ contract TokenBase is ERC20 {
         admin = newAdmin;
     }
 
-    function mint(address caller, address to, uint256 amount) external {
-        require(caller == admin, "only admin");
+    function mint(address to, uint256 amount) external {
+        require(msg.sender == admin, "only admin");
         _mint(to, amount);
     }
 
-    function burn(address caller, address owner, uint256 amount) external {
-        require(caller == admin, "only admin");
+    function burn(address owner, uint256 amount) external {
+        require(msg.sender == admin, "only admin");
         _burn(owner, amount);
     }
 

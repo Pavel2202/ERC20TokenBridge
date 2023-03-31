@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "./TokenBase.sol";
+import "../Base/TokenBase.sol";
 
 contract TokenUSDC is TokenBase {
     constructor() TokenBase("USD Coin", "USDC") {}

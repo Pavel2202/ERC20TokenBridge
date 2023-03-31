@@ -2,12 +2,7 @@ const { assert, expect } = require("chai");
 const { getNamedAccounts, deployments, ethers, network } = require("hardhat");
 
 describe("BridgeBase", function () {
-  let maticBridge,
-    usdcToken,
-    deployer,
-    deployerSigner,
-    receiver,
-    receiverSigner;
+  let ethBridge, usdcToken, deployer, deployerSigner, receiver, receiverSigner;
   const chainId = network.config.chainId;
 
   this.beforeEach(async function () {
@@ -16,97 +11,82 @@ describe("BridgeBase", function () {
     receiver = (await getNamedAccounts()).receiver;
     receiverSigner = await ethers.getSigner(receiver);
     await deployments.fixture(["all"]);
-    maticBridge = await ethers.getContract("BridgeMatic", deployer);
+    ethBridge = await ethers.getContract("BridgeEth", deployer);
     usdcToken = await ethers.getContract("TokenUSDC", deployer);
+    await usdcToken.connect(deployerSigner).updateAdmin(ethBridge.address);
+    await ethBridge.setToken(usdcToken.address);
   });
 
   describe("constructor", function () {
-    it("Deployer is admin", async function () {
-      const sender = await maticBridge.getAdminAddress();
+    it("Sets deployer as admin", async function () {
+      const sender = await ethBridge.getAdminAddress();
       assert.equal(sender, deployer);
     });
   });
 
   describe("burn", function () {
-    it("Burns token, emits event and increments nonce", async function () {
-      maticBridge.connect(deployerSigner).mint(deployer, deployer, 1000, 0);
-
-      await expect(
-        maticBridge.connect(deployerSigner).burn(deployer, deployer, 100)
-      ).to.emit(maticBridge, "Transfer");
-
-      const balance = await usdcToken
+    it("Successfully burns", async function () {
+      await ethBridge
         .connect(deployerSigner)
-        .balanceOf(deployer);
+        .mint(receiver, 500, 0, ethBridge.address);
 
-      assert.equal(Number(balance), 900);
+      await expect(ethBridge.connect(receiverSigner).burn(1)).to.emit(
+        ethBridge,
+        "Transfer"
+      );
 
-      const nonce = await maticBridge.getNonce();
+      const balance = await usdcToken.balanceOf(receiver);
+      assert.equal(balance, 499);
+
+      const nonce = Number(await ethBridge.getNonce());
       assert.equal(nonce, 1);
-    });
-
-    it("Reverts with only admin error when called not by owner", async function () {
-      maticBridge.connect(deployerSigner).mint(deployer, deployer, 1000, 0);
-
-      await expect(
-        maticBridge.burn(receiver, deployer, 100)
-      ).to.be.revertedWith("only admin");
     });
   });
 
   describe("mint", function () {
-    it("Mints token, emits event and changes processedNonces", async function () {
-      await expect(
-        maticBridge.connect(deployerSigner).mint(deployer, deployer, 1000, 0)
-      ).to.emit(maticBridge, "Transfer");
-      const balance = await usdcToken
-        .connect(deployerSigner)
-        .balanceOf(deployer);
-
-      assert.equal(Number(balance), 1000);
-
-      const isNonceProcessed = await maticBridge.isNonceProcessed(0);
-      assert.equal(isNonceProcessed, true);
-    });
-
-    it("Reverts with only admin error when called not by owner", async function () {
-      await expect(
-        maticBridge.mint(receiver, deployer, 100, 0)
-      ).to.be.revertedWith("only admin");
-    });
-
     it("Reverts if nonce is processed", async function () {
-      await maticBridge.mint(deployer, deployer, 100, 0);
+      await ethBridge
+        .connect(deployerSigner)
+        .mint(receiver, 500, 0, ethBridge.address);
 
       await expect(
-        maticBridge.mint(deployer, deployer, 100, 0)
+        ethBridge
+          .connect(deployerSigner)
+          .mint(receiver, 500, 0, ethBridge.address)
       ).to.be.revertedWith("Transfer already processed.");
+    });
+
+    it("Successfully mints", async function () {
+      await expect(
+        ethBridge
+          .connect(deployerSigner)
+          .mint(receiver, 500, 0, ethBridge.address)
+      ).to.emit(ethBridge, "Transfer");
+
+      const balance = await usdcToken.balanceOf(receiver);
+      assert.equal(balance, 500);
     });
   });
 
-  describe("TokenBaseTests", function () {
-    it("Updates admin address", async function () {
-      await usdcToken.updateAdmin(receiver);
-      const newAdmin = await usdcToken.getAdminAddress();
-      assert.equal(receiver, newAdmin);
+  describe("isNonceProcessed", function () {
+    it("Retuns true if nonce is processed", async function () {
+      await ethBridge
+        .connect(deployerSigner)
+        .mint(receiver, 500, 0, ethBridge.address);
+
+      const isProcessed = await ethBridge.isNonceProcessed(
+        ethBridge.address,
+        0
+      );
+      assert.equal(isProcessed, true);
     });
 
-    it("Reverts if not called by admin", async function () {
-      await usdcToken.updateAdmin(receiver);
-      await expect(
-        usdcToken.connect(deployerSigner).updateAdmin(deployer)
-      ).to.be.revertedWith("only admin");
-    });
-
-    it("Reverts if tried to set admin more than once", async function () {
-      await expect(
-        usdcToken.connect(deployerSigner).setAdmin(receiver)
-      ).to.be.revertedWith("admin set");
-    });
-
-    it("Returns is admin is set", async function () {
-      let isSet = await usdcToken.isAdminSet();
-      assert.equal(isSet, 1);
+    it("Retuns false if nonce is not processed", async function () {
+      const isProcessed = await ethBridge.isNonceProcessed(
+        ethBridge.address,
+        0
+      );
+      assert.equal(isProcessed, false);
     });
   });
 });

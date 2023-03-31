@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.19;
 
-import "./BridgeBase.sol";
+import "../Base/BridgeBase.sol";
 
-contract BridgeBsc is BridgeBase {
+contract BridgePolygon is BridgeBase {
     constructor() BridgeBase() {}
 }

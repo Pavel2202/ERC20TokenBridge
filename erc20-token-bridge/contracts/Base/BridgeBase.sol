@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.19;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./IToken.sol";
+import "../../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../Interface/IToken.sol";
 
 contract BridgeBase {
     address public admin;
@@ -11,20 +11,28 @@ contract BridgeBase {
     uint256 public nonce;
     mapping(address => mapping(uint256 => bool)) public processedNonces;
 
-    event Transfer(address from, address to, uint256 amount, uint256 step);
+    enum Step {
+        Burn,
+        Mint
+    }
+
+    event Transfer(
+        address indexed to,
+        uint256 amount,
+        Step indexed step
+    );
 
     constructor() {
         admin = msg.sender;
     }
 
-    function burn(address caller, address to, uint256 amount) external {
-        token.burn(caller, to, amount);
-        emit Transfer(caller, to, amount, 0);
+    function burn(uint256 amount) external {
+        token.burn(msg.sender, amount);
+        emit Transfer(msg.sender, amount, Step.Burn);
         nonce++;
     }
 
     function mint(
-        address caller,
         address to,
         uint256 amount,
         uint256 otherChainNonce,
@@ -36,8 +44,8 @@ contract BridgeBase {
         );
         processedNonces[burnContractAddress][otherChainNonce] = true;
 
-        token.mint(caller, to, amount);
-        emit Transfer(caller, to, amount, 1);
+        token.mint(to, amount);
+        emit Transfer(to, amount, Step.Mint);
     }
 
     function setToken(address tokenAddress) external {
@@ -50,5 +58,12 @@ contract BridgeBase {
 
     function getNonce() external view returns (uint256) {
         return nonce;
+    }
+
+    function isNonceProcessed(
+        address contractAddress,
+        uint256 _nonce
+    ) external view returns (bool) {
+        return processedNonces[contractAddress][_nonce];
     }
 }
