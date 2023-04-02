@@ -1,6 +1,21 @@
 const { ethers } = require("hardhat");
 const fs = require("fs-extra");
 
+const FRONTEND_TOKEN_USDC_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/TokenUsdc/contractAddresses.json";
+const FRONTEND_TOKEN_USDC_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/TokenUsdc/abi.json";
+
+const FRONTEND_TOKEN_SHARK_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/TokenShark/contractAddresses.json";
+const FRONTEND_TOKEN_SHARK_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/TokenShark/abi.json";
+
+const FRONTEND_ETH_BRIDGE_ADDRESSES_FILE =
+  "../erc20-token-bridge-ui/constants/EthBridge/contractAddresses.json";
+const FRONTEND_ETH_BRIDGE_ABI_FILE =
+  "../erc20-token-bridge-ui/constants/EthBridge/abi.json";
+
 module.exports = async function () {
   const chainId = network.config.chainId;
 
@@ -67,6 +82,48 @@ module.exports = async function () {
     console.log(tokenShark.address);
     tx = await tokenShark.functions.updateAdmin(bridgeEth.address);
     await tx.wait(1);
+
+    const usdcTokenCurrentAddresses = JSON.parse(
+      fs.readFileSync(FRONTEND_TOKEN_USDC_ADDRESSES_FILE, "utf8")
+    );
+    usdcTokenCurrentAddresses[chainId] = tokenUsdc.address;
+    fs.writeFileSync(
+      FRONTEND_TOKEN_USDC_ADDRESSES_FILE,
+      JSON.stringify(usdcTokenCurrentAddresses)
+    );
+
+    fs.writeFileSync(
+      FRONTEND_TOKEN_USDC_ABI_FILE,
+      tokenUsdc.interface.format(ethers.utils.FormatTypes.json)
+    );
+
+    const tokenSharkCurrentAddresses = JSON.parse(
+      fs.readFileSync(FRONTEND_TOKEN_SHARK_ADDRESSES_FILE, "utf8")
+    );
+    tokenSharkCurrentAddresses[chainId] = tokenShark.address;
+    fs.writeFileSync(
+      FRONTEND_TOKEN_SHARK_ADDRESSES_FILE,
+      JSON.stringify(tokenSharkCurrentAddresses)
+    );
+
+    fs.writeFileSync(
+      FRONTEND_TOKEN_SHARK_ABI_FILE,
+      tokenShark.interface.format(ethers.utils.FormatTypes.json)
+    );
+
+    const ethBridgeCurrentAddresses = JSON.parse(
+      fs.readFileSync(FRONTEND_ETH_BRIDGE_ADDRESSES_FILE, "utf8")
+    );
+    ethBridgeCurrentAddresses[chainId] = bridgeEth.address;
+    fs.writeFileSync(
+      FRONTEND_ETH_BRIDGE_ADDRESSES_FILE,
+      JSON.stringify(ethBridgeCurrentAddresses)
+    );
+
+    fs.writeFileSync(
+      FRONTEND_ETH_BRIDGE_ABI_FILE,
+      bridgeEth.interface.format(ethers.utils.FormatTypes.json)
+    );
   }
 };
 

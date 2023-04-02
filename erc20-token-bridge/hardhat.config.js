@@ -3,11 +3,9 @@ require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 require("dotenv").config();
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const MNEMONIC = process.env.MNEMONIC;
 const PASS_PHRASE = process.env.PASS_PHRASE;
 
-const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
 const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL;
 const BSCTESTNET_RPC_URL = process.env.BSCTESTNET_RPC_URL;

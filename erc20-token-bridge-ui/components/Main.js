@@ -1,17 +1,5 @@
 import { ethers } from "ethers";
 import {
-  ethBridgeContractAddresses,
-  ethBridgeAbi,
-} from "../constants/EthBridge";
-import {
-  maticBridgeContractAddresses,
-  maticBridgeAbi,
-} from "../constants/MaticBridge";
-import {
-  bscBridgeContractAddresses,
-  bscBridgeAbi,
-} from "../constants/BscBridge";
-import {
   tokenUsdcContractAddresses,
   tokenUsdcAbi,
 } from "@/constants/TokenUsdc";
@@ -19,32 +7,32 @@ import {
   tokenSharkContractAddresses,
   tokenSharkAbi,
 } from "@/constants/TokenShark";
+import {
+  ethBridgeContractAddresses,
+  ethBridgeAbi,
+} from "../constants/EthBridge";
+import {
+  bscBridgeContractAddresses,
+  bscBridgeAbi,
+} from "../constants/BscBridge";
+import {
+  polygonBridgeContractAddresses,
+  polygonBridgeAbi,
+} from "@/constants/PolygonBridge";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { useEffect, useState } from "react";
 
 const Main = () => {
   const [provider, setProvider] = useState();
-  const [ethBridge, setEthBridge] = useState();
-  const [maticBridge, setMaticBridge] = useState();
-  const [bscBridge, setBscBridge] = useState();
   const [tokenUsdc, setTokenUsdc] = useState();
   const [tokenShark, setTokenShark] = useState();
+  const [ethBridge, setEthBridge] = useState();
+  const [bscBridge, setBscBridge] = useState();
+  const [polygonBridge, setPolygonBridge] = useState();
 
   const { isWeb3Enabled, chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
 
-  const ethBridgeAddress =
-    chainId in ethBridgeContractAddresses
-      ? ethBridgeContractAddresses[chainId]
-      : null;
-  const maticBridgeAddress =
-    chainId in maticBridgeContractAddresses
-      ? maticBridgeContractAddresses[chainId]
-      : null;
-  const bscBridgeAddress =
-    chainId in bscBridgeContractAddresses
-      ? bscBridgeContractAddresses[chainId]
-      : null;
   const tokenUsdcAddress =
     chainId in tokenUsdcContractAddresses
       ? tokenUsdcContractAddresses[chainId]
@@ -53,6 +41,18 @@ const Main = () => {
     chainId in tokenSharkContractAddresses
       ? tokenSharkContractAddresses[chainId]
       : null;
+  const ethBridgeAddress =
+    chainId in ethBridgeContractAddresses
+      ? ethBridgeContractAddresses[chainId]
+      : null;
+  const bscBridgeAddress =
+    chainId in bscBridgeContractAddresses
+      ? bscBridgeContractAddresses[chainId]
+      : null;
+  const polygonBridgeAddress =
+    chainId in polygonBridgeContractAddresses
+      ? polygonBridgeContractAddresses[chainId]
+      : null;
 
   useEffect(() => {
     if (isWeb3Enabled) {
@@ -60,64 +60,62 @@ const Main = () => {
 
       Promise.all([data]).then((data) => {
         const providerCall = data[0].providerCall;
-        const ethBridgeCall = data[0].ethBridgeCall;
-        const maticBridgeCall = data[0].maticBridgeCall;
-        const bscBridgeCall = data[0].bscBridgeCall;
         const tokenUsdcCall = data[0].tokenUsdcCall;
         const tokenSharkCall = data[0].tokenSharkCall;
+        const ethBridgeCall = data[0].ethBridgeCall;
+        //const bscBridgeCall = data[0].bscBridgeCall;
+        //const polygonBridgeCall = data[0].polygonBridgeCall;
 
         setProvider(providerCall);
-        setEthBridge(ethBridgeCall);
-        setMaticBridge(maticBridgeCall);
-        setBscBridge(bscBridgeCall);
         setTokenUsdc(tokenUsdcCall);
         setTokenShark(tokenSharkCall);
+        setEthBridge(ethBridgeCall);
+        setBscBridge(null);
+        setPolygonBridge(null);
       });
     }
-  }, [isWeb3Enabled]);
+  }, [isWeb3Enabled, chainId]);
 
   async function setup() {
-    const providerCall = await new ethers.providers.Web3Provider(
-      window.ethereum
-    );
+    const providerCall = new ethers.providers.Web3Provider(window.ethereum);
 
-    const ethBridgeCall = await new ethers.Contract(
-      ethBridgeAddress,
-      ethBridgeAbi,
-      providerCall.getSigner()
-    );
-
-    const maticBridgeCall = await new ethers.Contract(
-      maticBridgeAddress,
-      maticBridgeAbi,
-      providerCall.getSigner()
-    );
-
-    const bscBridgeCall = await new ethers.Contract(
-      bscBridgeAddress,
-      bscBridgeAbi,
-      providerCall.getSigner()
-    );
-
-    const tokenUsdcCall = await new ethers.Contract(
+    const tokenUsdcCall = new ethers.Contract(
       tokenUsdcAddress,
       tokenUsdcAbi,
-      providerCall.getSigner()
+      providerCall
     );
 
-    const tokenSharkCall = await new ethers.Contract(
+    const tokenSharkCall = new ethers.Contract(
       tokenSharkAddress,
       tokenSharkAbi,
       providerCall.getSigner()
     );
 
+    const ethBridgeCall = new ethers.Contract(
+      ethBridgeAddress,
+      ethBridgeAbi,
+      providerCall.getSigner()
+    );
+
+    // const bscBridgeCall = new ethers.Contract(
+    //   bscBridgeAddress,
+    //   bscBridgeAbi,
+    //   providerCall.getSigner()
+    // );
+
+    // const polygonBridgeCall = new ethers.Contract(
+    //   polygonBridgeAddress,
+    //   polygonBridgeAbi,
+    //   providerCall.getSigner()
+    // );
+
     return {
       providerCall,
-      ethBridgeCall,
-      maticBridgeCall,
-      bscBridgeCall,
       tokenUsdcCall,
       tokenSharkCall,
+      ethBridgeCall,
+      //bscBridgeCall,
+      //polygonBridgeCall,
     };
   }
 
@@ -135,12 +133,14 @@ const Main = () => {
 
     if (chainId === 31337) {
       fromBridge = ethBridge;
+    } else if (chainId == 11155111) {
+      fromBridge = ethers;
     }
 
     if (toBridge == "ethBridge") {
       toBridge = ethBridge;
-    } else if (toBridge == "maticBridge") {
-      toBridge = maticBridge;
+    } else if (toBridge == "polygonBridge") {
+      toBridge = polygonBridge;
     } else if (toBridge == "bscBridge") {
       toBridge = bscBridge;
     }
@@ -157,8 +157,6 @@ const Main = () => {
     const admin = (await fromBridge.functions.getAdminAddress()).toString();
 
     let tx = await fromBridge.functions.burn(
-      admin,
-      sender,
       ethers.utils.parseUnits(amount, "ether")
     );
 
@@ -183,7 +181,6 @@ const Main = () => {
     const nonce = (await fromBridge.functions.getNonce()).toString();
     await fromBridge.once("Transfer", async () => {
       await toBridge.functions.mint(
-        admin,
         receiver,
         ethers.utils.parseUnits(amount, "ether"),
         ethers.BigNumber.from(nonce),
@@ -199,7 +196,7 @@ const Main = () => {
           Select to bridge:
           <select name="toBridge">
             <option value="ethBridge">Ethereum</option>
-            <option value="maticBridge">Polygon</option>
+            <option value="polygonBridge">Polygon</option>
             <option value="bscBridge">Binace Smart Chain</option>
           </select>
         </div>
@@ -229,21 +226,18 @@ const Main = () => {
           const sender = ethereum.selectedAddress;
           const nonce = Math.ceil(Math.random() * 100000);
 
-          const admin = (
-            await ethBridge.functions.getAdminAddress()
-          ).toString();
-
           await ethBridge.functions.setToken(
-            "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+            "0x228A79ebc5d1dD278bC0Df1b759D72BB1FB16950"
           );
 
-          let tx = await ethBridge.functions.mint(
-            admin,
-            sender,
-            ethers.utils.parseUnits("500", "ether"),
-            ethers.BigNumber.from(nonce),
-            "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
-          );
+          let tx = await ethBridge
+            .functions.mint(
+              sender,
+              1,
+              1,
+              "0x697C4BD284F007781EE716BA2ae914ed4942b21a",
+              { from: sender, gasLimit: 1 * 10 ** 6 }
+            );
 
           await tx.wait(1);
         }}

@@ -16,11 +16,7 @@ contract BridgeBase {
         Mint
     }
 
-    event Transfer(
-        address indexed to,
-        uint256 amount,
-        Step indexed step
-    );
+    event Transfer(address indexed to, uint256 amount, Step indexed step);
 
     constructor() {
         admin = msg.sender;
