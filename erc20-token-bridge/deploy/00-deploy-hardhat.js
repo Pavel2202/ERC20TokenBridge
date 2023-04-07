@@ -4,21 +4,13 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const chainId = network.config.chainId;
 
   if (chainId == 31337) {
-    const tokenUsdc = await deploy("TokenUSDC", {
+    const limeToken = await deploy("LimeToken", {
       from: deployer,
-      args: [],
+      args: [2],
       log: true,
       waitConfirmations: network.config.blockConfirmations || 1,
     });
-    console.log("USDC token deployed " + tokenUsdc.address);
-
-    const tokenShark = await deploy("TokenShark", {
-      from: deployer,
-      args: [],
-      log: true,
-      waitConfirmations: network.config.blockConfirmations || 1,
-    });
-    console.log("Shark token deployed " + tokenShark.address);
+    console.log("Lime token deployed " + limeToken.address);
 
     const ethBridge = await deploy("BridgeEth", {
       from: deployer,

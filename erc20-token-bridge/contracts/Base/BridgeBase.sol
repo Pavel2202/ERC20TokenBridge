@@ -3,17 +3,14 @@
 pragma solidity ^0.8.19;
 
 import "../../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../Interface/IToken.sol";
 
 contract BridgeBase {
     address public admin;
-    IToken public token;
-    uint256 public nonce;
-    mapping(address => mapping(uint256 => bool)) public processedNonces;
+    IERC20 public token;
 
     enum Step {
-        Burn,
-        Mint
+        Send,
+        Get
     }
 
     event Transfer(address indexed to, uint256 amount, Step indexed step);
@@ -22,44 +19,22 @@ contract BridgeBase {
         admin = msg.sender;
     }
 
-    function burn(uint256 amount) external {
-        token.burn(msg.sender, amount);
-        emit Transfer(msg.sender, amount, Step.Burn);
-        nonce++;
+    function deposit(uint256 amount) external {
+        token.approve(address(this), amount);
+        token.transferFrom(msg.sender, address(this), amount);
+        emit Transfer(msg.sender, amount, Step.Send);
     }
 
-    function mint(
-        address to,
-        uint256 amount,
-        uint256 otherChainNonce,
-        address burnContractAddress
-    ) external {
-        require(
-            processedNonces[burnContractAddress][otherChainNonce] == false,
-            "Transfer already processed."
-        );
-        processedNonces[burnContractAddress][otherChainNonce] = true;
-
-        token.mint(to, amount);
-        emit Transfer(to, amount, Step.Mint);
+    function get(address to, uint256 amount) external {
+        token.transfer(to, amount);
+        emit Transfer(to, amount, Step.Get);
     }
 
     function setToken(address tokenAddress) external {
-        token = IToken(tokenAddress);
+        token = IERC20(tokenAddress);
     }
 
     function getAdminAddress() external view returns (address) {
         return admin;
-    }
-
-    function getNonce() external view returns (uint256) {
-        return nonce;
-    }
-
-    function isNonceProcessed(
-        address contractAddress,
-        uint256 _nonce
-    ) external view returns (bool) {
-        return processedNonces[contractAddress][_nonce];
     }
 }
