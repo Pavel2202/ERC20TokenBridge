@@ -21,7 +21,18 @@ describe("BridgeBase", function () {
       const sender = await ethBridge.getAdminAddress();
       const balance = (await limeToken.balanceOf(deployer)).toString();
       assert.equal(sender, deployer);
-      assert.equal(balance, "2000000000000000000")
+      assert.equal(balance, "2000000000000000000");
+    });
+  });
+
+  describe("bridge", function () {
+    it("test", async function () {
+      await ethBridge.connect(deployerSigner).approve(ethBridge.address, 100);
+      let allowance = await ethBridge.allowance(deployer, ethBridge.address);
+      assert.equal(allowance, 100);
+
+      allowance = await ethBridge.allowance(deployer, ethBridge.address);
+      assert.equal(allowance, 90);
     });
   });
 });
