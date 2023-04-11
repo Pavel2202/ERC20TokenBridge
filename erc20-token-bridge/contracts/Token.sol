@@ -14,4 +14,8 @@ contract Token is ERC20, ERC20Permit, Ownable {
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
         transferOwnership(_owner);
     }
+
+    function mint(address target) external onlyOwner {
+        _mint(target, 1000);
+    }
 }

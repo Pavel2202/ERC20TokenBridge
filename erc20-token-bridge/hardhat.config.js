@@ -56,8 +56,11 @@ module.exports = {
       default: 0,
       1: 0,
     },
-    receiver: {
+    alice: {
       default: 1,
+    },
+    bob: {
+      default: 2,
     },
   },
 };

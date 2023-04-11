@@ -1,10 +1,9 @@
-const { network, ethers } = require("hardhat");
+const { network } = require("hardhat");
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  const factory = await ethers.getContract("TokenFactory");
-  const args = [factory.address];
+  const args = [];
 
   const bridge = await deploy("Bridge", {
     from: deployer,
