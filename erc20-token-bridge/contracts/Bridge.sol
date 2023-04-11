@@ -4,9 +4,8 @@ pragma solidity ^0.8.19;
 
 import "./Token.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-contract Bridge is Ownable {
+contract Bridge {
     address public admin;
 
     mapping(address => bool) public isBridge;
@@ -52,7 +51,6 @@ contract Bridge is Ownable {
             s
         );
 
-        Token(token).transferFrom(msg.sender, address(this), amount);
         deposits[msg.sender][token] = amount;
         increaseWithdraw(
             msg.sender,
@@ -62,6 +60,7 @@ contract Bridge is Ownable {
             targetBridge,
             amount
         );
+        Token(token).transferFrom(msg.sender, address(this), amount);
         emit Deposit(msg.sender, token, targetBridge, amount);
     }
 
@@ -87,7 +86,7 @@ contract Bridge is Ownable {
         withdraws[to][token] += amount;
     }
 
-    function withdraw(
+    function withdrawFromBridge(
         address from,
         address token,
         address fromBridge,
