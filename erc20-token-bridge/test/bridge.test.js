@@ -43,7 +43,7 @@ describe("Bridge", function () {
   });
 
   describe("sendToBridge", function () {
-    it("reverts if target bridge is the same as current bridge", async function () {
+    it("reverts if target bridge is not registered bridge", async function () {
       const signature = await onPermit(
         alice,
         ethereumBridge.address,
@@ -58,7 +58,7 @@ describe("Bridge", function () {
           .sendToBridge(
             bob,
             token.address,
-            ethereumBridge.address,
+            bob,
             100,
             signature.deadline,
             signature.v,
@@ -157,60 +157,19 @@ describe("Bridge", function () {
   });
 
   describe("increaseWithdraw", function () {
-    it("reverts if wants to increase with invalid amount", async function () {
-      const signature = await onPermit(
-        alice,
-        ethereumBridge.address,
-        token,
-        provider,
-        100
-      );
-
-      await ethereumBridge
-        .connect(aliceSigner)
-        .sendToBridge(
-          bob,
-          token.address,
-          polygonBridge.address,
-          100,
-          signature.deadline,
-          signature.v,
-          signature.r,
-          signature.s
-        );
-
-      await expect(
-        ethereumBridge.increaseWithdraw(
-          alice,
-          bob,
-          token.address,
-          ethereumBridge.address,
-          polygonBridge.address,
-          5000
-        )
-      ).to.be.revertedWith("invalid amount");
-    });
-  });
-
-  describe("_increaseWithdraw", function () {
     it("reverts if not called by registered bridge", async function () {
       await expect(
         ethereumBridge
           .connect(aliceSigner)
-          ._increaseWithdraw(bob, token.address, 100)
+          .increaseWithdraw(bob, token.address, 100)
       ).to.be.revertedWith("no permission");
     });
   });
 
   describe("withdrawFromBridge", function () {
-    it("reverts if from bridge is the same as current bridge", async function () {
+    it("reverts if from bridge is not registered bridge", async function () {
       await expect(
-        polygonBridge.withdrawFromBridge(
-          alice,
-          token.address,
-          polygonBridge.address,
-          100
-        )
+        polygonBridge.withdrawFromBridge(alice, token.address, bob, 100)
       ).to.be.revertedWith("invalid bridge address");
     });
 
@@ -293,12 +252,12 @@ describe("Bridge", function () {
     });
   });
 
-  describe("_decreaseDeposits", function () {
+  describe("decreaseDeposits", function () {
     it("reverts if not called by registered bridge", async function () {
       await expect(
         polygonBridge
           .connect(bobSigner)
-          ._decreaseDeposits(alice, token.address, 100)
+          .decreaseDeposits(alice, token.address, 100)
       ).to.be.revertedWith("no permission");
     });
   });
@@ -314,7 +273,7 @@ describe("Bridge", function () {
       await ethereumBridge.connect(deployerSigner).addBridge(bob);
       const isBobBridge = await ethereumBridge
         .connect(deployerSigner)
-        .isBridge(bob);
+        .bridges(bob);
       assert.equal(isBobBridge, true);
     });
   });

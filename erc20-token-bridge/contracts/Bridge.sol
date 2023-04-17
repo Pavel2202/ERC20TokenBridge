@@ -8,7 +8,7 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract Bridge {
     address public admin;
 
-    mapping(address => bool) public isBridge;
+    mapping(address => bool) public bridges;
     mapping(address => mapping(address => uint256)) public deposits;
     mapping(address => mapping(address => uint256)) public withdraws;
 
@@ -38,7 +38,7 @@ contract Bridge {
         bytes32 r,
         bytes32 s
     ) external {
-        require(address(this) != targetBridge, "invalid bridge address");
+        require(bridges[targetBridge], "invalid bridge address");
         require(amount > 0, "invalid amount");
 
         Token(token).permit(
@@ -51,38 +51,18 @@ contract Bridge {
             s
         );
 
-        deposits[msg.sender][token] = amount;
-        increaseWithdraw(
-            msg.sender,
-            to,
-            token,
-            address(this),
-            targetBridge,
-            amount
-        );
+        deposits[msg.sender][token] += amount;
+        Bridge(targetBridge).increaseWithdraw(to,  token, amount);
         Token(token).transferFrom(msg.sender, address(this), amount);
         emit Deposit(msg.sender, token, targetBridge, amount);
     }
 
     function increaseWithdraw(
-        address from,
-        address to,
-        address token,
-        address fromBridge,
-        address targetBridge,
-        uint256 amount
-    ) public {
-        uint256 fromBridgeAmount = Bridge(fromBridge).deposits(from, token);
-        require(fromBridgeAmount >= amount, "invalid amount");
-        Bridge(targetBridge)._increaseWithdraw(to, token, amount);
-    }
-
-    function _increaseWithdraw(
         address to,
         address token,
         uint256 amount
     ) external {
-        require(isBridge[msg.sender], "no permission");
+        require(bridges[msg.sender], "no permission");
         withdraws[to][token] += amount;
     }
 
@@ -92,25 +72,25 @@ contract Bridge {
         address fromBridge,
         uint256 amount
     ) external {
-        require(address(this) != fromBridge, "invalid bridge address");
+        require(bridges[fromBridge], "invalid bridge address");
         require(withdraws[msg.sender][token] >= amount, "insufficient balance");
         withdraws[msg.sender][token] -= amount;
-        Bridge(fromBridge)._decreaseDeposits(from, token, amount);
+        Bridge(fromBridge).decreaseDeposits(from, token, amount);
         Token(token).transfer(msg.sender, amount);
         emit Withdraw(msg.sender, token, amount);
     }
 
-    function _decreaseDeposits(
+    function decreaseDeposits(
         address from,
         address token,
         uint256 amount
     ) external {
-        require(isBridge[msg.sender], "no permission");
+        require(bridges[msg.sender], "no permission");
         deposits[from][token] -= amount;
     }
 
     function addBridge(address bridge) external {
         require(msg.sender == admin, "only admin");
-        isBridge[bridge] = true;
+        bridges[bridge] = true;
     }
 }
