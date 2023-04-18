@@ -8,6 +8,7 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract Bridge {
     address public admin;
 
+    mapping(address => uint256) public tokenNonce;
     mapping(address => mapping(address => uint256)) public deposits;
     mapping(address => mapping(address => uint256)) public withdraws;
 
@@ -47,6 +48,7 @@ contract Bridge {
             s
         );
 
+        tokenNonce[token] += 1;
         deposits[msg.sender][token] += amount;
         withdraws[to][token] += amount;
         Token(token).transferFrom(msg.sender, address(this), amount);

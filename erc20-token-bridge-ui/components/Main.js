@@ -13,11 +13,14 @@ const Main = () => {
     async function setup() {
       chainId = await (await provider.getNetwork()).chainId;
       bridgeAddress = addresses[chainId];
-      tokenAddress = "0xBE279442db8ab10c5f2Cc7B3caCdeb1538e3Ac4F";
+      tokenAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
     }
 
-    async function onPermit(owner, spender, provider, amount) {
-      const nonce = await provider.getTransactionCount(owner);
+    async function onPermit(bridge, owner, spender, provider, amount) {
+      //const nonce = ethers.BigNumber.from(await provider.getTransactionCount(tokenAddress) - 1);
+      console.log(bridge.functions);
+      const nonce = (await bridge.functions.tokenNonce(tokenAddress)).toString();
+      console.log(nonce);
       const deadline = +new Date() + 60 * 60;
 
       const domainType = [
@@ -46,7 +49,7 @@ const Main = () => {
         owner: owner,
         spender: spender,
         value: amount.toString(),
-        nonce: nonce.toString(16),
+        nonce: nonce,
         deadline: deadline,
       };
 
@@ -60,7 +63,7 @@ const Main = () => {
         message: permit,
       });
 
-      const signatureLike = await signer.provider.send("eth_signTypedData_v4", [
+      const signatureLike = await provider.send("eth_signTypedData_v4", [
         owner,
         data,
       ]);
@@ -78,21 +81,17 @@ const Main = () => {
       await setup();
       const bridge = new ethers.Contract(bridgeAddress, abi, signer);
       const { v, r, s, deadline } = await onPermit(
+        bridge,
         account,
         bridgeAddress,
         provider,
-        1,
+        ethers.utils.parseUnits("1", 18)
       );
-        console.log(v);
-        console.log(r);
-        console.log(s);
-        console.log(deadline);
-      console.log("permited");
 
       await bridge.functions.sendToBridge(
         "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         tokenAddress,
-        1,
+        ethers.utils.parseUnits("1", 18),
         deadline,
         v,
         r,
@@ -100,16 +99,71 @@ const Main = () => {
       );
     }
 
+    async function withdrawFromBridgeCall() {
+      await setup();
+      const bridge = new ethers.Contract(bridgeAddress, abi, signer);
+
+      let tx = await bridge.functions.withdrawFromBridge(
+        account,
+        tokenAddress,
+        ethers.utils.parseUnits("1", 18)
+      );
+      await tx.wait(1);
+      console.log(tx);
+    }
+
     return (
       <div>
-        <button onClick={sendToBridgeCall}>SEND</button>
+        <form>
+          <div>
+            Choose token
+            <select>
+              <option>SHARK</option>
+              <option>LIME</option>
+            </select>
+          </div>
+          <div>
+            <label>To</label>
+            <input></input>
+          </div>
+          <div>
+            <label>Amount</label>
+            <input></input>
+          </div>
+        </form>
+
+        <div>
+          <button onClick={sendToBridgeCall}>SEND</button>
+          <button onClick={withdrawFromBridgeCall}>CLAIM</button>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <button>SEND</button>
+      <form>
+        <div>
+          Choose token
+          <select>
+            <option>SHARK</option>
+            <option>LIME</option>
+          </select>
+        </div>
+        <div>
+          <label>To</label>
+          <input></input>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input></input>
+        </div>
+      </form>
+
+      <div>
+        <button>SEND</button>
+        <button>CLAIM</button>
+      </div>
     </div>
   );
 };
