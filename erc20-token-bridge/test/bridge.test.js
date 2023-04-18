@@ -11,8 +11,7 @@ describe("Bridge", function () {
     bob,
     bobSigner,
     token,
-    ethereumBridge,
-    polygonBridge;
+    bridge;
 
   beforeEach(async function () {
     deployer = (await getNamedAccounts()).deployer;
@@ -25,65 +24,34 @@ describe("Bridge", function () {
     provider = waffle.provider;
     await deployments.fixture(["all"]);
 
-    ethereumBridge = await ethers.getContract("EthereumBridge", deployer);
-    polygonBridge = await ethers.getContract("PolygonBridge", deployer);
-    ethereumBridge.connect(deployerSigner).addBridge(polygonBridge.address);
-    polygonBridge.connect(deployerSigner).addBridge(ethereumBridge.address);
-
+    bridge = await ethers.getContract("Bridge", deployer);
     token = await ethers.getContract("Token", deployer);
-    await token.connect(deployerSigner).mint(alice);
-    await token.connect(deployerSigner).mint(polygonBridge.address);
+    await token.mint(alice);
   });
 
   describe("constructor", function () {
     it("sets admin to deployer", async function () {
-      const admin = await ethereumBridge.admin();
+      const admin = await bridge.admin();
       assert.equal(deployer, admin);
     });
   });
 
   describe("sendToBridge", function () {
-    it("reverts if target bridge is not registered bridge", async function () {
-      const signature = await onPermit(
-        alice,
-        ethereumBridge.address,
-        token,
-        provider,
-        100
-      );
-
-      await expect(
-        ethereumBridge
-          .connect(aliceSigner)
-          .sendToBridge(
-            bob,
-            token.address,
-            bob,
-            100,
-            signature.deadline,
-            signature.v,
-            signature.r,
-            signature.s
-          )
-      ).to.be.revertedWith("invalid bridge address");
-    });
-
     it("reverts if amount is 0", async function () {
       const signature = await onPermit(
         alice,
-        ethereumBridge.address,
+        bridge.address,
         token,
         provider,
         0
       );
 
       await expect(
-        ethereumBridge
+        bridge
           .connect(aliceSigner)
           .sendToBridge(
             bob,
             token.address,
-            polygonBridge.address,
             0,
             signature.deadline,
             signature.v,
@@ -96,146 +64,126 @@ describe("Bridge", function () {
     it("increases sender's deposit and token balance of the bridge", async function () {
       const signature = await onPermit(
         alice,
-        ethereumBridge.address,
+        bridge.address,
         token,
         provider,
-        100
+        100000
       );
 
-      await ethereumBridge
+      await bridge
         .connect(aliceSigner)
         .sendToBridge(
           bob,
           token.address,
-          polygonBridge.address,
-          100,
+          100000,
           signature.deadline,
           signature.v,
           signature.r,
           signature.s
         );
 
-      const deposits = await ethereumBridge.deposits(alice, token.address);
-      assert.equal(Number(deposits), 100);
+      const deposits = await bridge.deposits(alice, token.address);
+      assert.equal(Number(deposits), 100000);
 
-      const withdraws = await polygonBridge.withdraws(bob, token.address);
-      assert.equal(Number(withdraws), 100);
+      const withdraws = await bridge.withdraws(bob, token.address);
+      assert.equal(Number(withdraws), 100000);
 
       const aliceBalance = await token.balanceOf(alice);
-      assert.equal(Number(aliceBalance), 900);
+      assert.equal(Number(aliceBalance), 999999999999900000);
 
-      const bridgeBalance = await token.balanceOf(ethereumBridge.address);
-      assert.equal(Number(bridgeBalance), 100);
+      const bridgeBalance = await token.balanceOf(bridge.address);
+      assert.equal(Number(bridgeBalance), 100000);
     });
 
     it("emits event on successful deposit", async function () {
       const signature = await onPermit(
         alice,
-        ethereumBridge.address,
+        bridge.address,
         token,
         provider,
-        100
+        100000
       );
 
       await expect(
-        ethereumBridge
+        bridge
           .connect(aliceSigner)
           .sendToBridge(
             bob,
             token.address,
-            polygonBridge.address,
-            100,
+            100000,
             signature.deadline,
             signature.v,
             signature.r,
             signature.s
           )
       )
-        .to.emit(ethereumBridge, "Deposit")
-        .withArgs(alice, token.address, polygonBridge.address, 100);
-    });
-  });
-
-  describe("increaseWithdraw", function () {
-    it("reverts if not called by registered bridge", async function () {
-      await expect(
-        ethereumBridge
-          .connect(aliceSigner)
-          .increaseWithdraw(bob, token.address, 100)
-      ).to.be.revertedWith("no permission");
+        .to.emit(bridge, "Deposit")
+        .withArgs(alice, token.address, 100000);
     });
   });
 
   describe("withdrawFromBridge", function () {
-    it("reverts if from bridge is not registered bridge", async function () {
-      await expect(
-        polygonBridge.withdrawFromBridge(alice, token.address, bob, 100)
-      ).to.be.revertedWith("invalid bridge address");
-    });
-
     it("reverts if there amount is more than withdraw amount", async function () {
       await expect(
-        polygonBridge
+        bridge
           .connect(bobSigner)
-          .withdrawFromBridge(alice, token.address, ethereumBridge.address, 100)
+          .withdrawFromBridge(alice, token.address, 100)
       ).to.be.revertedWith("insufficient balance");
     });
 
     it("decreases receiver's withraw and token balance of the bridge", async function () {
       const signature = await onPermit(
         alice,
-        ethereumBridge.address,
+        bridge.address,
         token,
         provider,
-        100
+        100000
       );
 
-      await ethereumBridge
+      await bridge
         .connect(aliceSigner)
         .sendToBridge(
           bob,
           token.address,
-          polygonBridge.address,
-          100,
+          100000,
           signature.deadline,
           signature.v,
           signature.r,
           signature.s
         );
 
-      await polygonBridge
+      await bridge
         .connect(bobSigner)
-        .withdrawFromBridge(alice, token.address, ethereumBridge.address, 100);
+        .withdrawFromBridge(alice, token.address, 100000);
 
-      const withdraws = await polygonBridge.withdraws(bob, token.address);
+      const withdraws = await bridge.withdraws(bob, token.address);
       assert.equal(Number(withdraws), 0);
 
-      const deposits = await ethereumBridge.deposits(alice, token.address);
+      const deposits = await bridge.deposits(alice, token.address);
       assert.equal(Number(deposits), 0);
 
       const bobBalance = await token.balanceOf(bob);
-      assert.equal(Number(bobBalance), 100);
+      assert.equal(Number(bobBalance), 100000);
 
-      const bridgeBalance = await token.balanceOf(polygonBridge.address);
-      assert.equal(Number(bridgeBalance), 900);
+      const bridgeBalance = await token.balanceOf(bridge.address);
+      assert.equal(Number(bridgeBalance), 0);
     });
 
     it("emits event on successful withdraw", async function () {
       const signature = await onPermit(
         alice,
-        ethereumBridge.address,
+        bridge.address,
         token,
         provider,
-        100
+        100000
       );
 
-      await ethereumBridge
+      await bridge
         .connect(aliceSigner)
         .sendToBridge(
           bob,
           token.address,
-          polygonBridge.address,
-          100,
+          100000,
           signature.deadline,
           signature.v,
           signature.r,
@@ -243,38 +191,12 @@ describe("Bridge", function () {
         );
 
       await expect(
-        polygonBridge
+        bridge
           .connect(bobSigner)
-          .withdrawFromBridge(alice, token.address, ethereumBridge.address, 100)
+          .withdrawFromBridge(alice, token.address, 100000)
       )
-        .to.emit(polygonBridge, "Withdraw")
-        .withArgs(bob, token.address, 100);
-    });
-  });
-
-  describe("decreaseDeposits", function () {
-    it("reverts if not called by registered bridge", async function () {
-      await expect(
-        polygonBridge
-          .connect(bobSigner)
-          .decreaseDeposits(alice, token.address, 100)
-      ).to.be.revertedWith("no permission");
-    });
-  });
-
-  describe("addBridge", function () {
-    it("reverts if not called by admin", async function () {
-      await expect(
-        ethereumBridge.connect(aliceSigner).addBridge(bob)
-      ).to.be.revertedWith("only admin");
-    });
-
-    it("adds new bridge", async function () {
-      await ethereumBridge.connect(deployerSigner).addBridge(bob);
-      const isBobBridge = await ethereumBridge
-        .connect(deployerSigner)
-        .bridges(bob);
-      assert.equal(isBobBridge, true);
+        .to.emit(bridge, "Withdraw")
+        .withArgs(bob, token.address, 100000);
     });
   });
 });

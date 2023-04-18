@@ -13,6 +13,7 @@
     "@web3modal/react": "^2.3.0",
     "buffer": "^6.0.3",
     "ethers": "^5",
+    "ethers-eip712": "^0.2.0",
     "moralis": "^2.18.2",
     "moralis-v1": "^1.12.0",
     "next": "13.3.0",

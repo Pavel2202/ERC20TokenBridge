@@ -30,7 +30,7 @@ describe("Token", function () {
     it("successfully mints tokens", async function () {
       await token.connect(deployerSigner).mint(alice);
       const balance = await token.balanceOf(alice);
-      assert.equal(balance, 1000);
+      assert.equal(balance.toString(), "1000000000000000000");
     });
   });
 });

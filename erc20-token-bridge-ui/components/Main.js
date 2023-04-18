@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { useWeb3Contract, useMoralis } from "react-moralis";
+import { useWeb3Contract } from "react-moralis";
 import { addresses, abi } from "@/constants";
 
 const Main = () => {
@@ -8,14 +8,16 @@ const Main = () => {
     const signer = provider.getSigner();
     let account = ethereum.selectedAddress;
 
-    const ethBridgeAddress = addresses[31337][0];
-    const polygonBridgeAddress = addresses[31337][1];
+    let chainId, bridgeAddress, tokenAddress;
 
-    const ethBridge = new ethers.Contract(ethBridgeAddress, abi, signer);
+    async function setup() {
+      chainId = await (await provider.getNetwork()).chainId;
+      bridgeAddress = addresses[chainId];
+      tokenAddress = "0xBE279442db8ab10c5f2Cc7B3caCdeb1538e3Ac4F";
+    }
 
-    async function onPermit(owner, spender, contract, provider, amount) {
-      //const nonce = await contract.nonces(owner);
-      const nonce = 2;
+    async function onPermit(owner, spender, provider, amount) {
+      const nonce = await provider.getTransactionCount(owner);
       const deadline = +new Date() + 60 * 60;
 
       const domainType = [
@@ -25,12 +27,11 @@ const Main = () => {
         { name: "verifyingContract", type: "address" },
       ];
 
-      const chainId = await (await provider.getNetwork()).chainId;
       const domain = {
-        name: "TokenShark",
+        name: "SharkToken",
         version: "1",
         chainId: chainId,
-        verifyingContract: contract.address,
+        verifyingContract: tokenAddress,
       };
 
       const Permit = [
@@ -59,7 +60,7 @@ const Main = () => {
         message: permit,
       });
 
-      const signatureLike = await provider.send("eth_signTypedData_v4", [
+      const signatureLike = await signer.provider.send("eth_signTypedData_v4", [
         owner,
         data,
       ]);
@@ -73,33 +74,42 @@ const Main = () => {
       };
     }
 
-    async function sendToBridge() {
+    async function sendToBridgeCall() {
+      await setup();
+      const bridge = new ethers.Contract(bridgeAddress, abi, signer);
       const { v, r, s, deadline } = await onPermit(
         account,
-        ethBridgeAddress,
-        ethBridge,
+        bridgeAddress,
         provider,
-        100
+        1,
       );
+        console.log(v);
+        console.log(r);
+        console.log(s);
+        console.log(deadline);
+      console.log("permited");
 
-      console.log(v);
-      console.log(r);
-      console.log(s);
-      console.log(deadline);
+      await bridge.functions.sendToBridge(
+        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        tokenAddress,
+        1,
+        deadline,
+        v,
+        r,
+        s
+      );
     }
 
     return (
       <div>
-        <button
-          onClick={sendToBridge}
-        ></button>
+        <button onClick={sendToBridgeCall}>SEND</button>
       </div>
     );
   }
 
   return (
     <div>
-      <button></button>
+      <button>SEND</button>
     </div>
   );
 };

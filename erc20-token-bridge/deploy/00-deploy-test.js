@@ -6,25 +6,24 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   if (chainId == 31337) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
-    const args = [];
 
-    const ethereumBridge = await deploy("EthereumBridge", {
+    const bridge = await deploy("Bridge", {
       from: deployer,
-      args: args,
+      args: [],
       log: true,
       waitConfirmations: network.config.blockConfirmations || 1,
     });
 
-    console.log("EthereumBridge deployed " + ethereumBridge.address);
+    console.log("TestBridge deployed " + bridge.address);
 
-    const polygonBridge = await deploy("PolygonBridge", {
+    const token = await deploy("Token", {
       from: deployer,
-      args: args,
+      args: ["SharkToken", "SHARK", deployer],
       log: true,
       waitConfirmations: network.config.blockConfirmations || 1,
     });
 
-    console.log("PolygonBridge deployed " + polygonBridge.address);
+    console.log("TestToken deployed " + token.address);
   }
 };
 

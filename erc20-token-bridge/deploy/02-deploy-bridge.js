@@ -1,18 +1,206 @@
-const { network } = require("hardhat");
+const { network, ethers } = require("hardhat");
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy } = deployments;
-  const { deployer } = await getNamedAccounts();
-  const args = [];
+module.exports = async () => {
+  const chainId = network.config.chainId;
 
-  const bridge = await deploy("Bridge", {
-    from: deployer,
-    args: args,
-    log: true,
-    waitConfirmations: network.config.blockConfirmations || 1,
-  });
+  const abi = [
+    {
+      inputs: [],
+      stateMutability: "nonpayable",
+      type: "constructor",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "sender",
+          type: "address",
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "token",
+          type: "address",
+        },
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "amount",
+          type: "uint256",
+        },
+      ],
+      name: "Deposit",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "receiver",
+          type: "address",
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "token",
+          type: "address",
+        },
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "amount",
+          type: "uint256",
+        },
+      ],
+      name: "Withdraw",
+      type: "event",
+    },
+    {
+      inputs: [],
+      name: "admin",
+      outputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+      ],
+      name: "deposits",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "to",
+          type: "address",
+        },
+        {
+          internalType: "address",
+          name: "token",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "amount",
+          type: "uint256",
+        },
+        {
+          internalType: "uint256",
+          name: "deadline",
+          type: "uint256",
+        },
+        {
+          internalType: "uint8",
+          name: "v",
+          type: "uint8",
+        },
+        {
+          internalType: "bytes32",
+          name: "r",
+          type: "bytes32",
+        },
+        {
+          internalType: "bytes32",
+          name: "s",
+          type: "bytes32",
+        },
+      ],
+      name: "sendToBridge",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "from",
+          type: "address",
+        },
+        {
+          internalType: "address",
+          name: "token",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "amount",
+          type: "uint256",
+        },
+      ],
+      name: "withdrawFromBridge",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+      ],
+      name: "withdraws",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+  ];
+  const bin =
+    "0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610cb6806100606000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c80635d4ebd431461005c5780638f601f661461008c578063bbeddb2f146100bc578063cdfb42b7146100d8578063f851a440146100f4575b600080fd5b61007660048036038101906100719190610780565b610112565b60405161008391906107d9565b60405180910390f35b6100a660048036038101906100a19190610780565b610137565b6040516100b391906107d9565b60405180910390f35b6100d660048036038101906100d19190610820565b61015c565b005b6100f260048036038101906100ed91906108e2565b61042a565b005b6100fc6106f9565b6040516101099190610993565b60405180910390f35b6002602052816000526040600020602052806000526040600020600091509150505481565b6001602052816000526040600020602052806000526040600020600091509150505481565b80600260003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054101561021b576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161021290610a0b565b60405180910390fd5b80600260003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546102a79190610a5a565b9250508190555080600160008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825461033a9190610a5a565b925050819055508173ffffffffffffffffffffffffffffffffffffffff1663a9059cbb33836040518363ffffffff1660e01b815260040161037c929190610a8e565b6020604051808303816000875af115801561039b573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103bf9190610aef565b508173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167f9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb8360405161041d91906107d9565b60405180910390a3505050565b6000851161046d576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161046490610b68565b60405180910390fd5b8573ffffffffffffffffffffffffffffffffffffffff1663d505accf333088888888886040518863ffffffff1660e01b81526004016104b29796959493929190610ba6565b600060405180830381600087803b1580156104cc57600080fd5b505af11580156104e0573d6000803e3d6000fd5b5050505084600160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008873ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546105709190610c15565b9250508190555084600260008973ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008873ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546106039190610c15565b925050819055508573ffffffffffffffffffffffffffffffffffffffff166323b872dd3330886040518463ffffffff1660e01b815260040161064793929190610c49565b6020604051808303816000875af1158015610666573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061068a9190610aef565b508573ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167f5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62876040516106e891906107d9565b60405180910390a350505050505050565b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080fd5b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b600061074d82610722565b9050919050565b61075d81610742565b811461076857600080fd5b50565b60008135905061077a81610754565b92915050565b600080604083850312156107975761079661071d565b5b60006107a58582860161076b565b92505060206107b68582860161076b565b9150509250929050565b6000819050919050565b6107d3816107c0565b82525050565b60006020820190506107ee60008301846107ca565b92915050565b6107fd816107c0565b811461080857600080fd5b50565b60008135905061081a816107f4565b92915050565b6000806000606084860312156108395761083861071d565b5b60006108478682870161076b565b93505060206108588682870161076b565b92505060406108698682870161080b565b9150509250925092565b600060ff82169050919050565b61088981610873565b811461089457600080fd5b50565b6000813590506108a681610880565b92915050565b6000819050919050565b6108bf816108ac565b81146108ca57600080fd5b50565b6000813590506108dc816108b6565b92915050565b600080600080600080600060e0888a0312156109015761090061071d565b5b600061090f8a828b0161076b565b97505060206109208a828b0161076b565b96505060406109318a828b0161080b565b95505060606109428a828b0161080b565b94505060806109538a828b01610897565b93505060a06109648a828b016108cd565b92505060c06109758a828b016108cd565b91505092959891949750929550565b61098d81610742565b82525050565b60006020820190506109a86000830184610984565b92915050565b600082825260208201905092915050565b7f696e73756666696369656e742062616c616e6365000000000000000000000000600082015250565b60006109f56014836109ae565b9150610a00826109bf565b602082019050919050565b60006020820190508181036000830152610a24816109e8565b9050919050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6000610a65826107c0565b9150610a70836107c0565b9250828203905081811115610a8857610a87610a2b565b5b92915050565b6000604082019050610aa36000830185610984565b610ab060208301846107ca565b9392505050565b60008115159050919050565b610acc81610ab7565b8114610ad757600080fd5b50565b600081519050610ae981610ac3565b92915050565b600060208284031215610b0557610b0461071d565b5b6000610b1384828501610ada565b91505092915050565b7f696e76616c696420616d6f756e74000000000000000000000000000000000000600082015250565b6000610b52600e836109ae565b9150610b5d82610b1c565b602082019050919050565b60006020820190508181036000830152610b8181610b45565b9050919050565b610b9181610873565b82525050565b610ba0816108ac565b82525050565b600060e082019050610bbb600083018a610984565b610bc86020830189610984565b610bd560408301886107ca565b610be260608301876107ca565b610bef6080830186610b88565b610bfc60a0830185610b97565b610c0960c0830184610b97565b98975050505050505050565b6000610c20826107c0565b9150610c2b836107c0565b9250828201905080821115610c4357610c42610a2b565b5b92915050565b6000606082019050610c5e6000830186610984565b610c6b6020830185610984565b610c7860408301846107ca565b94935050505056fea26469706673582212206fecdecf4d20d539ec29f61a087f99cb63df8535971cf51d80f2f3e08d90a96d64736f6c63430008130033";
 
-  console.log("Bridge deployed " + bridge.address);
+  if (chainId == 11155111) {
+    const provider = new ethers.providers.JsonRpcProvider(
+      process.env.SEPOLIA_RPC_URL
+    );
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+    const bridgeFactory = new ethers.ContractFactory(abi, bin, wallet);
+    const bridge = await bridgeFactory.deploy();
+
+    console.log("Bridge deployed " + bridge.address);
+  }
 };
 
 module.exports.tags = ["all", "bridge"];
