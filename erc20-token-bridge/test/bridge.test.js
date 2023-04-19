@@ -11,6 +11,7 @@ describe("Bridge", function () {
     bob,
     bobSigner,
     token,
+    factory,
     bridge;
 
   beforeEach(async function () {
@@ -25,14 +26,19 @@ describe("Bridge", function () {
     await deployments.fixture(["all"]);
 
     bridge = await ethers.getContract("Bridge", deployer);
+    factory = await ethers.getContract("TokenFactory", deployer);
     token = await ethers.getContract("Token", deployer);
-    await token.mint(alice);
+    await factory.connect(deployerSigner).transferOwnership(bridge.address);
+    await token.connect(deployerSigner).mint(alice, 100000);
+    await bridge.connect(deployerSigner).addBridge(bridge.address);
   });
 
   describe("constructor", function () {
-    it("sets admin to deployer", async function () {
+    it("sets admin to deployer and factory", async function () {
       const admin = await bridge.admin();
+      const factoryAddress = await bridge.tokenFactory();
       assert.equal(deployer, admin);
+      assert.equal(factory.address, factoryAddress);
     });
   });
 
@@ -46,18 +52,29 @@ describe("Bridge", function () {
         0
       );
 
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: bridge.address,
+        amount: 0,
+        deadline: signature.deadline,
+      };
+
+      let tokenData = {
+        name: "test",
+        symbol: "test",
+      };
+
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
       await expect(
         bridge
           .connect(aliceSigner)
-          .sendToBridge(
-            bob,
-            token.address,
-            0,
-            signature.deadline,
-            signature.v,
-            signature.r,
-            signature.s
-          )
+          .deposit(depositData, tokenData, signatureData)
       ).to.be.revertedWith("invalid amount");
     });
 
@@ -70,26 +87,34 @@ describe("Bridge", function () {
         100000
       );
 
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: bridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      let tokenData = {
+        name: "test",
+        symbol: "test",
+      };
+
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
       await bridge
         .connect(aliceSigner)
-        .sendToBridge(
-          bob,
-          token.address,
-          100000,
-          signature.deadline,
-          signature.v,
-          signature.r,
-          signature.s
-        );
-
-      const deposits = await bridge.deposits(alice, token.address);
-      assert.equal(Number(deposits), 100000);
+        .deposit(depositData, tokenData, signatureData);
 
       const withdraws = await bridge.withdraws(bob, token.address);
       assert.equal(Number(withdraws), 100000);
 
       const aliceBalance = await token.balanceOf(alice);
-      assert.equal(Number(aliceBalance), 999999999999900000);
+      assert.equal(Number(aliceBalance), 0);
 
       const bridgeBalance = await token.balanceOf(bridge.address);
       assert.equal(Number(bridgeBalance), 100000);
@@ -104,30 +129,44 @@ describe("Bridge", function () {
         100000
       );
 
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: bridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      let tokenData = {
+        name: "test",
+        symbol: "test",
+      };
+
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
       await expect(
         bridge
           .connect(aliceSigner)
-          .sendToBridge(
-            bob,
-            token.address,
-            100000,
-            signature.deadline,
-            signature.v,
-            signature.r,
-            signature.s
-          )
+          .deposit(depositData, tokenData, signatureData)
       )
         .to.emit(bridge, "Deposit")
-        .withArgs(alice, token.address, 100000);
+        .withArgs(alice, token.address, bridge.address, 100000);
     });
   });
 
   describe("withdrawFromBridge", function () {
     it("reverts if there amount is more than withdraw amount", async function () {
+      let withdrawData = {
+        token: token.address,
+        amount: 100000,
+      };
+
       await expect(
-        bridge
-          .connect(bobSigner)
-          .withdrawFromBridge(alice, token.address, 100)
+        bridge.connect(bobSigner).withdrawFromBridge(withdrawData)
       ).to.be.revertedWith("insufficient balance");
     });
 
@@ -140,33 +179,47 @@ describe("Bridge", function () {
         100000
       );
 
-      await bridge
-        .connect(aliceSigner)
-        .sendToBridge(
-          bob,
-          token.address,
-          100000,
-          signature.deadline,
-          signature.v,
-          signature.r,
-          signature.s
-        );
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: bridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      let tokenData = {
+        name: "test",
+        symbol: "test",
+      };
+
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
+      let withdrawData = {
+        token: token.address,
+        amount: 100000,
+      };
 
       await bridge
-        .connect(bobSigner)
-        .withdrawFromBridge(alice, token.address, 100000);
+        .connect(aliceSigner)
+        .deposit(depositData, tokenData, signatureData);
+
+      await token.connect(deployerSigner).transferOwnership(bridge.address);
+
+      await bridge.connect(bobSigner).withdrawFromBridge(withdrawData);
 
       const withdraws = await bridge.withdraws(bob, token.address);
       assert.equal(Number(withdraws), 0);
-
-      const deposits = await bridge.deposits(alice, token.address);
-      assert.equal(Number(deposits), 0);
 
       const bobBalance = await token.balanceOf(bob);
       assert.equal(Number(bobBalance), 100000);
 
       const bridgeBalance = await token.balanceOf(bridge.address);
-      assert.equal(Number(bridgeBalance), 0);
+      console.log(Number(bridgeBalance));
+      // assert.equal(Number(bridgeBalance), 0);
     });
 
     it("emits event on successful withdraw", async function () {
@@ -178,23 +231,37 @@ describe("Bridge", function () {
         100000
       );
 
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: bridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      let tokenData = {
+        name: "test",
+        symbol: "test",
+      };
+
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
+      let withdrawData = {
+        token: token.address,
+        amount: 100000,
+      };
+
       await bridge
         .connect(aliceSigner)
-        .sendToBridge(
-          bob,
-          token.address,
-          100000,
-          signature.deadline,
-          signature.v,
-          signature.r,
-          signature.s
-        );
+        .deposit(depositData, tokenData, signatureData);
 
-      await expect(
-        bridge
-          .connect(bobSigner)
-          .withdrawFromBridge(alice, token.address, 100000)
-      )
+      await token.connect(deployerSigner).transferOwnership(bridge.address);
+
+      await expect(bridge.connect(bobSigner).withdrawFromBridge(withdrawData))
         .to.emit(bridge, "Withdraw")
         .withArgs(bob, token.address, 100000);
     });

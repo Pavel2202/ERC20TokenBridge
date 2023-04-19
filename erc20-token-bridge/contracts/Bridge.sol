@@ -2,68 +2,105 @@
 
 pragma solidity ^0.8.19;
 
+import "./IBridge.sol";
 import "./Token.sol";
+import "./TokenFactory.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract Bridge {
+contract Bridge is IBridge {
     address public admin;
+    TokenFactory public tokenFactory;
 
+    mapping(address => bool) public bridges;
     mapping(address => uint256) public tokenNonce;
-    mapping(address => mapping(address => uint256)) public deposits;
     mapping(address => mapping(address => uint256)) public withdraws;
 
-    event Deposit(
-        address indexed sender,
-        address indexed token,
-        uint256 amount
-    );
-    event Withdraw(
-        address indexed receiver,
-        address indexed token,
-        uint256 amount
-    );
-
-    constructor() {
+    constructor(address _tokenFactory) {
         admin = msg.sender;
+        tokenFactory = TokenFactory(_tokenFactory);
     }
 
-    function sendToBridge(
-        address to,
-        address token,
-        uint256 amount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+    function deposit(
+        DepositData calldata _depositData,
+        TokenData calldata _tokenData,
+        Signature calldata _signature
     ) external {
-        require(amount > 0, "invalid amount");
+        require(_depositData.amount > 0, "invalid amount");
 
-        Token(token).permit(
+        Token(_depositData.token).permit(
             msg.sender,
             address(this),
-            amount,
-            deadline,
-            v,
-            r,
-            s
+            _depositData.amount,
+            _depositData.deadline,
+            _signature.v,
+            _signature.r,
+            _signature.s
         );
 
-        tokenNonce[token] += 1;
-        deposits[msg.sender][token] += amount;
-        withdraws[to][token] += amount;
-        Token(token).transferFrom(msg.sender, address(this), amount);
-        emit Deposit(msg.sender, token, amount);
+        tokenNonce[_depositData.token] += 1;
+        if (tokenFactory.tokens(_depositData.token) == address(0)) {
+            Token(_depositData.token).transferFrom(
+                msg.sender,
+                address(this),
+                _depositData.amount
+            );
+            IBridge(_depositData.targetBridge).createToken(
+                _depositData.token,
+                _tokenData
+            );
+        } else {
+            Token(_depositData.token).burnFrom(msg.sender, _depositData.amount);
+        }
+        IBridge(_depositData.targetBridge).increaseWithdraw(
+            _depositData.to,
+            _depositData.token,
+            _depositData.amount
+        );
+        emit Deposit(
+            msg.sender,
+            _depositData.token,
+            _depositData.targetBridge,
+            _depositData.amount
+        );
     }
 
-    function withdrawFromBridge(
-        address from,
+    function withdrawFromBridge(WithdrawData calldata _withdrawData) external {
+        require(
+            withdraws[msg.sender][_withdrawData.token] >= _withdrawData.amount,
+            "insufficient balance"
+        );
+        withdraws[msg.sender][_withdrawData.token] -= _withdrawData.amount;
+
+        if (tokenFactory.tokens(_withdrawData.token) == address(0)) {
+            Token(_withdrawData.token).transfer(
+                msg.sender,
+                _withdrawData.amount
+            );
+        } else {
+            Token(_withdrawData.token).mint(msg.sender, _withdrawData.amount);
+        }
+        emit Withdraw(msg.sender, _withdrawData.token, _withdrawData.amount);
+    }
+
+    function createToken(
+        address token,
+        TokenData calldata _tokenData
+    ) external {
+        require(bridges[msg.sender] == true, "no permission");
+        tokenFactory.create(token, _tokenData.name, _tokenData.symbol);
+    }
+
+    function increaseWithdraw(
+        address to,
         address token,
         uint256 amount
     ) external {
-        require(withdraws[msg.sender][token] >= amount, "insufficient balance");
-        withdraws[msg.sender][token] -= amount;
-        deposits[from][token] -= amount;
-        Token(token).transfer(msg.sender, amount);
-        emit Withdraw(msg.sender, token, amount);
+        require(bridges[msg.sender] == true, "no permission");
+        withdraws[to][token] += amount;
+    }
+
+    function addBridge(address _bridge) external {
+        require(admin == msg.sender, "no permission");
+        bridges[_bridge] = true;
     }
 }
