@@ -4,30 +4,79 @@ pragma solidity ^0.8.19;
 
 import "./IBridge.sol";
 import "./Token.sol";
-import "./TokenFactory.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+error TokenNotSupported();
+error InvalidAmount();
+error InsufficientBalance();
+error NoPermission();
 
 contract Bridge is IBridge {
     address public admin;
-    TokenFactory public tokenFactory;
 
     mapping(address => bool) public bridges;
+    mapping(address => bool) public supportedTokens;
+    mapping(address => address) public tokenToWrappedToken;
     mapping(address => uint256) public tokenNonce;
-    mapping(address => mapping(address => uint256)) public withdraws;
+    mapping(address => mapping(address => uint256)) public balance;
 
-    constructor(address _tokenFactory) {
+    modifier validateToken(address _token) {
+        if (!supportedTokens[_token]) {
+            revert TokenNotSupported();
+        }
+        _;
+    }
+
+    modifier validateAmount(uint256 amount) {
+        if (amount == 0) {
+            revert InvalidAmount();
+        }
+        _;
+    }
+
+    modifier validateBalance(
+        address from,
+        address token,
+        uint256 amount
+    ) {
+        if (balance[from][token] < amount) {
+            revert InsufficientBalance();
+        }
+        _;
+    }
+
+    modifier isBridge(address caller) {
+        if (!bridges[caller]) {
+            revert NoPermission();
+        }
+        _;
+    }
+
+    modifier isAdmin(address caller) {
+        if (caller != admin) {
+            revert NoPermission();
+        }
+        _;
+    }
+
+    constructor() {
         admin = msg.sender;
-        tokenFactory = TokenFactory(_tokenFactory);
     }
 
     function deposit(
         DepositData calldata _depositData,
-        TokenData calldata _tokenData,
         Signature calldata _signature
-    ) external {
-        require(_depositData.amount > 0, "invalid amount");
+    )
+        external
+        validateToken(_depositData.token)
+        validateAmount(_depositData.amount)
+    {
+        address wrappedToken = tokenToWrappedToken[_depositData.token];
+        bool isWrapped = wrappedToken != address(0);
 
-        Token(_depositData.token).permit(
+        address permitToken = isWrapped ? wrappedToken : _depositData.token;
+
+        Token(permitToken).permit(
             msg.sender,
             address(this),
             _depositData.amount,
@@ -36,71 +85,99 @@ contract Bridge is IBridge {
             _signature.r,
             _signature.s
         );
-
         tokenNonce[_depositData.token] += 1;
-        if (tokenFactory.tokens(_depositData.token) == address(0)) {
+
+        if (!isWrapped) {
             Token(_depositData.token).transferFrom(
                 msg.sender,
                 address(this),
                 _depositData.amount
             );
-            IBridge(_depositData.targetBridge).createToken(
+            IBridge(_depositData.targetBridge).increaseBalance(
+                _depositData.to,
                 _depositData.token,
-                _tokenData
+                _depositData.amount
+            );
+            emit DepositWithTransfer(
+                msg.sender,
+                _depositData.token,
+                _depositData.targetBridge,
+                _depositData.amount
             );
         } else {
-            Token(_depositData.token).burnFrom(msg.sender, _depositData.amount);
+            Token(wrappedToken).burnFrom(msg.sender, _depositData.amount);
+            IBridge(_depositData.targetBridge).increaseBalance(
+                _depositData.to,
+                _depositData.token,
+                _depositData.amount
+            );
+            emit DepositWithBurn(
+                msg.sender,
+                _depositData.token,
+                _depositData.targetBridge,
+                _depositData.amount
+            );
         }
-        IBridge(_depositData.targetBridge).increaseWithdraw(
-            _depositData.to,
-            _depositData.token,
-            _depositData.amount
-        );
-        emit Deposit(
-            msg.sender,
-            _depositData.token,
-            _depositData.targetBridge,
-            _depositData.amount
-        );
     }
 
-    function withdrawFromBridge(WithdrawData calldata _withdrawData) external {
-        require(
-            withdraws[msg.sender][_withdrawData.token] >= _withdrawData.amount,
-            "insufficient balance"
-        );
-        withdraws[msg.sender][_withdrawData.token] -= _withdrawData.amount;
+    function withdrawFromBridge(
+        WithdrawData calldata _withdrawData
+    )
+        external
+        validateToken(_withdrawData.token)
+        validateBalance(msg.sender, _withdrawData.token, _withdrawData.amount)
+    {
+        balance[msg.sender][_withdrawData.token] -= _withdrawData.amount;
 
-        if (tokenFactory.tokens(_withdrawData.token) == address(0)) {
+        address wrappedToken = tokenToWrappedToken[_withdrawData.token];
+        bool isWrapped = wrappedToken != address(0);
+
+        if (!isWrapped) {
             Token(_withdrawData.token).transfer(
                 msg.sender,
                 _withdrawData.amount
             );
+            emit WithdrawWithTransfer(
+                msg.sender,
+                _withdrawData.token,
+                _withdrawData.amount
+            );
         } else {
-            Token(_withdrawData.token).mint(msg.sender, _withdrawData.amount);
+            Token(wrappedToken).mint(msg.sender, _withdrawData.amount);
+            emit WithdrawWithMint(
+                msg.sender,
+                _withdrawData.token,
+                _withdrawData.amount
+            );
         }
-        emit Withdraw(msg.sender, _withdrawData.token, _withdrawData.amount);
     }
 
-    function createToken(
-        address token,
-        TokenData calldata _tokenData
-    ) external {
-        require(bridges[msg.sender] == true, "no permission");
-        tokenFactory.create(token, _tokenData.name, _tokenData.symbol);
-    }
-
-    function increaseWithdraw(
+    function increaseBalance(
         address to,
         address token,
         uint256 amount
-    ) external {
-        require(bridges[msg.sender] == true, "no permission");
-        withdraws[to][token] += amount;
+    ) external isBridge(msg.sender) {
+        balance[to][token] += amount;
     }
 
-    function addBridge(address _bridge) external {
-        require(admin == msg.sender, "no permission");
+    function addBridge(address _bridge) external isAdmin(msg.sender) {
         bridges[_bridge] = true;
+    }
+
+    function addToken(address _token) external isAdmin(msg.sender) {
+        supportedTokens[_token] = true;
+    }
+
+    function createWrappedToken(
+        address token,
+        string calldata name,
+        string calldata symbol
+    ) external isAdmin(msg.sender) {
+        Token wrappedToken = new Token(name, symbol, address(this));
+        tokenToWrappedToken[token] = address(wrappedToken);
+    }
+
+    function updateAdmin(address _admin) external isAdmin(msg.sender) {
+        admin = _admin;
     }
 }

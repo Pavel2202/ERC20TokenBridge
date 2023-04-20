@@ -11,8 +11,8 @@ describe("Bridge", function () {
     bob,
     bobSigner,
     token,
-    factory,
-    bridge;
+    ethBridge,
+    polygonBridge;
 
   beforeEach(async function () {
     deployer = (await getNamedAccounts()).deployer;
@@ -25,28 +25,55 @@ describe("Bridge", function () {
     provider = waffle.provider;
     await deployments.fixture(["all"]);
 
-    bridge = await ethers.getContract("Bridge", deployer);
-    factory = await ethers.getContract("TokenFactory", deployer);
+    ethBridge = await ethers.getContract("EthBridge", deployer);
+    polygonBridge = await ethers.getContract("PolygonBridge", deployer);
     token = await ethers.getContract("Token", deployer);
-    await factory.connect(deployerSigner).transferOwnership(bridge.address);
     await token.connect(deployerSigner).mint(alice, 100000);
-    await bridge.connect(deployerSigner).addBridge(bridge.address);
+    await ethBridge.connect(deployerSigner).addBridge(polygonBridge.address);
+    await polygonBridge.connect(deployerSigner).addBridge(ethBridge.address);
   });
 
   describe("constructor", function () {
-    it("sets admin to deployer and factory", async function () {
-      const admin = await bridge.admin();
-      const factoryAddress = await bridge.tokenFactory();
+    it("sets admin to deployer", async function () {
+      const admin = await ethBridge.admin();
       assert.equal(deployer, admin);
-      assert.equal(factory.address, factoryAddress);
     });
   });
 
-  describe("sendToBridge", function () {
-    it("reverts if amount is 0", async function () {
+  describe("deposit", function () {
+    it("reverts if token is not supported", async function () {
       const signature = await onPermit(
         alice,
-        bridge.address,
+        ethBridge.address,
+        token,
+        provider,
+        100000
+      );
+
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: polygonBridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
+      await expect(
+        ethBridge.connect(aliceSigner).deposit(depositData, signatureData)
+      ).to.be.reverted;
+    });
+
+    it("reverts if amount is 0", async function () {
+      await ethBridge.connect(deployerSigner).addToken(token.address);
+      const signature = await onPermit(
+        alice,
+        ethBridge.address,
         token,
         provider,
         0
@@ -55,14 +82,38 @@ describe("Bridge", function () {
       let depositData = {
         to: bob,
         token: token.address,
-        targetBridge: bridge.address,
+        targetBridge: polygonBridge.address,
         amount: 0,
         deadline: signature.deadline,
       };
 
-      let tokenData = {
-        name: "test",
-        symbol: "test",
+      let signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
+      await expect(
+        ethBridge.connect(aliceSigner).deposit(depositData, signatureData)
+      ).to.be.reverted;
+    });
+
+    it("increases sender's deposit and token balance of the bridge with token", async function () {
+      await ethBridge.connect(deployerSigner).addToken(token.address);
+      const signature = await onPermit(
+        alice,
+        ethBridge.address,
+        token,
+        provider,
+        100000
+      );
+
+      let depositData = {
+        to: bob,
+        token: token.address,
+        targetBridge: polygonBridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
       };
 
       let signatureData = {
@@ -72,58 +123,32 @@ describe("Bridge", function () {
       };
 
       await expect(
-        bridge
-          .connect(aliceSigner)
-          .deposit(depositData, tokenData, signatureData)
-      ).to.be.revertedWith("invalid amount");
-    });
-
-    it("increases sender's deposit and token balance of the bridge", async function () {
-      const signature = await onPermit(
-        alice,
-        bridge.address,
-        token,
-        provider,
-        100000
-      );
-
-      let depositData = {
-        to: bob,
-        token: token.address,
-        targetBridge: bridge.address,
-        amount: 100000,
-        deadline: signature.deadline,
-      };
-
-      let tokenData = {
-        name: "test",
-        symbol: "test",
-      };
-
-      let signatureData = {
-        v: signature.v,
-        r: signature.r,
-        s: signature.s,
-      };
-
-      await bridge
-        .connect(aliceSigner)
-        .deposit(depositData, tokenData, signatureData);
-
-      const withdraws = await bridge.withdraws(bob, token.address);
-      assert.equal(Number(withdraws), 100000);
+        ethBridge.connect(aliceSigner).deposit(depositData, signatureData)
+      )
+        .to.emit(ethBridge, "DepositWithTransfer")
+        .withArgs(alice, token.address, polygonBridge.address, 100000);
 
       const aliceBalance = await token.balanceOf(alice);
       assert.equal(Number(aliceBalance), 0);
 
-      const bridgeBalance = await token.balanceOf(bridge.address);
+      const bridgeBalance = await token.balanceOf(ethBridge.address);
       assert.equal(Number(bridgeBalance), 100000);
+
+      const bobBalance = await polygonBridge.balance(bob, depositData.token);
+      assert.equal(Number(bobBalance), 100000);
+
+      const nonce = await ethBridge.tokenNonce(token.address);
+      assert.equal(Number(nonce), 1);
     });
 
-    it("emits event on successful deposit", async function () {
-      const signature = await onPermit(
+    it("increases sender's deposit and token balance of the bridge with wrapped token", async function () {
+      //Alice gives Bob real tokens
+      await ethBridge.connect(deployerSigner).addToken(token.address);
+      await polygonBridge.connect(deployerSigner).addToken(token.address);
+
+      let signature = await onPermit(
         alice,
-        bridge.address,
+        ethBridge.address,
         token,
         provider,
         100000
@@ -132,14 +157,9 @@ describe("Bridge", function () {
       let depositData = {
         to: bob,
         token: token.address,
-        targetBridge: bridge.address,
+        targetBridge: polygonBridge.address,
         amount: 100000,
         deadline: signature.deadline,
-      };
-
-      let tokenData = {
-        name: "test",
-        symbol: "test",
       };
 
       let signatureData = {
@@ -148,32 +168,109 @@ describe("Bridge", function () {
         s: signature.s,
       };
 
+      await ethBridge.connect(aliceSigner).deposit(depositData, signatureData);
+      /////////
+
+      // Bob withdraws wrapped tokens
+      let withdrawData = {
+        token: token.address,
+        amount: 100000,
+      };
+
+      await polygonBridge
+        .connect(deployerSigner)
+        .createWrappedToken(token.address, "WShark", "WSHARK");
+
+      await polygonBridge.connect(bobSigner).withdrawFromBridge(withdrawData);
+
+      let wrappedTokenAddress = await polygonBridge.tokenToWrappedToken(
+        token.address
+      );
+      let wrappedTokenContract = await ethers.getContractFactory("Token");
+      let wrappedToken = await wrappedTokenContract.attach(wrappedTokenAddress);
+
+      ///////////////////
+
+      //Bob sends wrapped tokens to the bridge
+
+      signature = await onPermit(
+        bob,
+        polygonBridge.address,
+        wrappedToken,
+        provider,
+        100000
+      );
+
+      depositData = {
+        to: alice,
+        token: token.address,
+        targetBridge: ethBridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
       await expect(
-        bridge
-          .connect(aliceSigner)
-          .deposit(depositData, tokenData, signatureData)
+        polygonBridge.connect(bobSigner).deposit(depositData, signatureData)
       )
-        .to.emit(bridge, "Deposit")
-        .withArgs(alice, token.address, bridge.address, 100000);
+        .to.emit(polygonBridge, "DepositWithBurn")
+        .withArgs(bob, token.address, ethBridge.address, 100000);
+
+      const aliceBalance = await ethBridge.balance(alice, token.address);
+      assert.equal(Number(aliceBalance), 100000);
+
+      const bobBridgeBalance = await polygonBridge.balance(
+        bob,
+        depositData.token
+      );
+      assert.equal(Number(bobBridgeBalance), 0);
+
+      const bobTokenBalance = await wrappedToken.balanceOf(bob);
+      assert.equal(Number(bobTokenBalance), 0);
+
+      ///////////////
     });
   });
 
   describe("withdrawFromBridge", function () {
-    it("reverts if there amount is more than withdraw amount", async function () {
+    it("reverts if token is not supported", async function () {
       let withdrawData = {
         token: token.address,
         amount: 100000,
       };
 
       await expect(
-        bridge.connect(bobSigner).withdrawFromBridge(withdrawData)
-      ).to.be.revertedWith("insufficient balance");
+        polygonBridge.connect(aliceSigner).withdrawFromBridge(withdrawData)
+      ).to.be.reverted;
     });
 
-    it("decreases receiver's withraw and token balance of the bridge", async function () {
-      const signature = await onPermit(
+    it("reverts if there amount is more than withdraw amount", async function () {
+      await ethBridge.connect(deployerSigner).addToken(token.address);
+      await polygonBridge.connect(deployerSigner).addToken(token.address);
+
+      let withdrawData = {
+        token: token.address,
+        amount: 100000,
+      };
+
+      await expect(
+        polygonBridge.connect(bobSigner).withdrawFromBridge(withdrawData)
+      ).to.be.reverted;
+    });
+
+    it("withdraws tokens", async function () {
+      await ethBridge.connect(deployerSigner).addToken(token.address);
+      await polygonBridge.connect(deployerSigner).addToken(token.address);
+
+      //Alice gives Bob real tokens
+      let signature = await onPermit(
         alice,
-        bridge.address,
+        ethBridge.address,
         token,
         provider,
         100000
@@ -182,14 +279,9 @@ describe("Bridge", function () {
       let depositData = {
         to: bob,
         token: token.address,
-        targetBridge: bridge.address,
+        targetBridge: polygonBridge.address,
         amount: 100000,
         deadline: signature.deadline,
-      };
-
-      let tokenData = {
-        name: "test",
-        symbol: "test",
       };
 
       let signatureData = {
@@ -198,72 +290,159 @@ describe("Bridge", function () {
         s: signature.s,
       };
 
+      await ethBridge.connect(aliceSigner).deposit(depositData, signatureData);
+      /////////
+
+      // Bob withdraws wrapped tokens
       let withdrawData = {
         token: token.address,
         amount: 100000,
       };
 
-      await bridge
-        .connect(aliceSigner)
-        .deposit(depositData, tokenData, signatureData);
+      await polygonBridge
+        .connect(deployerSigner)
+        .createWrappedToken(token.address, "WShark", "WSHARK");
 
-      await token.connect(deployerSigner).transferOwnership(bridge.address);
-
-      await bridge.connect(bobSigner).withdrawFromBridge(withdrawData);
-
-      const withdraws = await bridge.withdraws(bob, token.address);
-      assert.equal(Number(withdraws), 0);
-
-      const bobBalance = await token.balanceOf(bob);
-      assert.equal(Number(bobBalance), 100000);
-
-      const bridgeBalance = await token.balanceOf(bridge.address);
-      console.log(Number(bridgeBalance));
-      // assert.equal(Number(bridgeBalance), 0);
-    });
-
-    it("emits event on successful withdraw", async function () {
-      const signature = await onPermit(
-        alice,
-        bridge.address,
-        token,
-        provider,
-        100000
-      );
-
-      let depositData = {
-        to: bob,
-        token: token.address,
-        targetBridge: bridge.address,
-        amount: 100000,
-        deadline: signature.deadline,
-      };
-
-      let tokenData = {
-        name: "test",
-        symbol: "test",
-      };
-
-      let signatureData = {
-        v: signature.v,
-        r: signature.r,
-        s: signature.s,
-      };
-
-      let withdrawData = {
-        token: token.address,
-        amount: 100000,
-      };
-
-      await bridge
-        .connect(aliceSigner)
-        .deposit(depositData, tokenData, signatureData);
-
-      await token.connect(deployerSigner).transferOwnership(bridge.address);
-
-      await expect(bridge.connect(bobSigner).withdrawFromBridge(withdrawData))
-        .to.emit(bridge, "Withdraw")
+      await expect(
+        polygonBridge.connect(bobSigner).withdrawFromBridge(withdrawData)
+      )
+        .to.emit(polygonBridge, "WithdrawWithMint")
         .withArgs(bob, token.address, 100000);
+
+      let wrappedTokenAddress = await polygonBridge.tokenToWrappedToken(
+        token.address
+      );
+      let wrappedTokenContract = await ethers.getContractFactory("Token");
+      let wrappedToken = await wrappedTokenContract.attach(wrappedTokenAddress);
+
+      const bobBalance = await wrappedToken.balanceOf(bob);
+      assert.equal(Number(bobBalance), 100000);
+      ///////////////////
+
+      //Bob sends wrapped tokens to the bridge
+
+      signature = await onPermit(
+        bob,
+        polygonBridge.address,
+        wrappedToken,
+        provider,
+        100000
+      );
+
+      depositData = {
+        to: alice,
+        token: token.address,
+        targetBridge: ethBridge.address,
+        amount: 100000,
+        deadline: signature.deadline,
+      };
+
+      signatureData = {
+        v: signature.v,
+        r: signature.r,
+        s: signature.s,
+      };
+
+      await polygonBridge
+        .connect(bobSigner)
+        .deposit(depositData, signatureData);
+
+      //Alice withdraws token from the bridge
+      withdrawData = {
+        token: token.address,
+        amount: 100000,
+      };
+
+      await expect(
+        ethBridge.connect(aliceSigner).withdrawFromBridge(withdrawData)
+      )
+        .to.emit(ethBridge, "WithdrawWithTransfer")
+        .withArgs(alice, token.address, 100000);
+
+      const aliceBalance = await token.balanceOf(alice);
+      assert.equal(Number(aliceBalance), 100000);
+
+      const bridgeBalance = await token.balanceOf(ethBridge.address);
+      assert.equal(Number(bridgeBalance), 0);
+    });
+  });
+
+  describe("increaseBalance", function () {
+    it("reverts if caller is not a bridge", async function () {
+      await expect(
+        ethBridge
+          .connect(aliceSigner)
+          .increaseBalance(alice, token.address, 50000)
+      ).to.be.reverted;
+    });
+
+    it("increases balance", async function () {
+      await ethBridge.connect(deployerSigner).addBridge(deployer);
+      await ethBridge
+        .connect(deployerSigner)
+        .increaseBalance(alice, token.address, 1);
+      const balance = await ethBridge.balance(alice, token.address);
+      assert.equal(Number(balance), 1);
+    });
+  });
+
+  describe("addBridge", function () {
+    it("reverts if caller is not admin", async function () {
+      await expect(
+        ethBridge.connect(aliceSigner).addBridge(alice)
+      ).to.be.reverted;
+    });
+
+    it("adds bridge", async function () {
+      await ethBridge.connect(deployerSigner).addBridge(alice);
+      const isBridge = await ethBridge.bridges(alice);
+      assert.equal(isBridge, true);
+    });
+  });
+
+  describe("addToken", function () {
+    it("reverts if caller is not admin", async function () {
+      await expect(
+        ethBridge.connect(aliceSigner).addToken(alice)
+      ).to.be.reverted;
+    });
+
+    it("adds token", async function () {
+      await ethBridge.connect(deployerSigner).addToken(alice);
+      const isToken = await ethBridge.supportedTokens(alice);
+      assert.equal(isToken, true);
+    });
+  });
+
+  describe("createWrappedToken", function () {
+    it("reverts if caller is not admin", async function () {
+      await expect(
+        ethBridge.connect(aliceSigner).createWrappedToken(alice, "test", "test")
+      ).to.be.reverted;
+    });
+
+    it("creates wrapped token", async function () {
+      await ethBridge
+        .connect(deployerSigner)
+        .createWrappedToken(token.address, "test", "test");
+      const wrappedTokenAddress = await ethBridge.tokenToWrappedToken(
+        token.address
+      );
+      assert.notEqual(wrappedTokenAddress, "0x");
+    });
+  });
+
+  describe("updateAdmin", function () {
+    it("reverts if caller is not admin", async function () {
+      await expect(
+        ethBridge.connect(aliceSigner).updateAdmin(alice)
+      ).to.be.reverted;
+    });
+
+    it("updates the admin", async function () {
+      await ethBridge.connect(deployerSigner).updateAdmin(alice);
+      const admin = await ethBridge.admin();
+      assert.equal(alice, admin);
     });
   });
 });

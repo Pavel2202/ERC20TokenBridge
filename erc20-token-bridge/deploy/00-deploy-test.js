@@ -7,23 +7,23 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const tokenFactory = await deploy("TokenFactory", {
+    const ethBridge = await deploy("EthBridge", {
       from: deployer,
       args: [],
       log: true,
       waitConfirmations: network.config.blockConfirmations || 1,
     })
 
-    console.log("Factory deployed " + tokenFactory.address);
+    console.log("EthBridge deployed " + ethBridge.address);
 
-    const bridge = await deploy("Bridge", {
+    const polygonBridge = await deploy("PolygonBridge", {
       from: deployer,
-      args: [tokenFactory.address],
+      args: [],
       log: true,
       waitConfirmations: network.config.blockConfirmations || 1,
     })
 
-    console.log("Bridge deployed " + bridge.address);
+    console.log("PolygonBridge deployed " + polygonBridge.address);
 
     const token = await deploy("Token", {
       from: deployer,

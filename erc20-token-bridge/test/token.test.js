@@ -1,7 +1,7 @@
 const { assert, expect } = require("chai");
 const { getNamedAccounts, deployments, ethers } = require("hardhat");
 
-xdescribe("Token", function () {
+describe("Token", function () {
   let deployer, deployerSigner, alice, aliceSigner, token;
 
   beforeEach(async function () {

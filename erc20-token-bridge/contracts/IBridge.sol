@@ -11,11 +11,6 @@ interface IBridge {
         uint256 deadline;
     }
 
-    struct TokenData {
-        string name;
-        string symbol;
-    }
-
     struct Signature {
         uint8 v;
         bytes32 r;
@@ -27,26 +22,46 @@ interface IBridge {
         uint256 amount;
     }
 
-    event Deposit(
+    event DepositWithTransfer(
         address indexed sender,
         address indexed token,
         address indexed targetBridge,
         uint256 amount
     );
 
-    event Withdraw(
+    event DepositWithBurn(
+        address indexed sender,
+        address indexed token,
+        address indexed targetBridge,
+        uint256 amount
+    );
+
+    event WithdrawWithTransfer(
         address indexed receiver,
         address indexed token,
         uint256 amount
     );
 
-    function deposit(DepositData calldata _depositData, TokenData calldata _tokenData, Signature calldata _signature) external;
+    event WithdrawWithMint(
+        address indexed receiver,
+        address indexed token,
+        uint256 amount
+    );
+
+    function deposit(
+        DepositData calldata _depositData,
+        Signature calldata _signature
+    ) external;
 
     function withdrawFromBridge(WithdrawData calldata _withdrawData) external;
 
-    function createToken(address token, TokenData calldata _tokenData) external;
-
-    function increaseWithdraw(address to, address token, uint256 amount) external;
+    function increaseBalance(
+        address to,
+        address token,
+        uint256 amount
+    ) external;
 
     function addBridge(address _bridge) external;
+
+    function addToken(address _token) external;
 }
