@@ -22,27 +22,15 @@ interface IBridge {
         uint256 amount;
     }
 
-    event DepositWithTransfer(
+    event Deposit(
         address indexed sender,
+        address receiver,
         address indexed token,
         address indexed targetBridge,
         uint256 amount
     );
 
-    event DepositWithBurn(
-        address indexed sender,
-        address indexed token,
-        address indexed targetBridge,
-        uint256 amount
-    );
-
-    event WithdrawWithTransfer(
-        address indexed receiver,
-        address indexed token,
-        uint256 amount
-    );
-
-    event WithdrawWithMint(
+    event Withdraw(
         address indexed receiver,
         address indexed token,
         uint256 amount
@@ -53,7 +41,7 @@ interface IBridge {
         Signature calldata _signature
     ) external;
 
-    function withdrawFromBridge(WithdrawData calldata _withdrawData) external;
+    function withdraw(WithdrawData calldata _withdrawData) external;
 
     function increaseBalance(
         address to,

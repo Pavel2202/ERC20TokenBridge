@@ -125,8 +125,8 @@ describe("Bridge", function () {
       await expect(
         ethBridge.connect(aliceSigner).deposit(depositData, signatureData)
       )
-        .to.emit(ethBridge, "DepositWithTransfer")
-        .withArgs(alice, token.address, polygonBridge.address, 100000);
+        .to.emit(ethBridge, "Deposit")
+        .withArgs(alice, bob, token.address, polygonBridge.address, 100000);
 
       const aliceBalance = await token.balanceOf(alice);
       assert.equal(Number(aliceBalance), 0);
@@ -181,7 +181,7 @@ describe("Bridge", function () {
         .connect(deployerSigner)
         .createWrappedToken(token.address, "WShark", "WSHARK");
 
-      await polygonBridge.connect(bobSigner).withdrawFromBridge(withdrawData);
+      await polygonBridge.connect(bobSigner).withdraw(withdrawData);
 
       let wrappedTokenAddress = await polygonBridge.tokenToWrappedToken(
         token.address
@@ -218,8 +218,8 @@ describe("Bridge", function () {
       await expect(
         polygonBridge.connect(bobSigner).deposit(depositData, signatureData)
       )
-        .to.emit(polygonBridge, "DepositWithBurn")
-        .withArgs(bob, token.address, ethBridge.address, 100000);
+        .to.emit(polygonBridge, "Deposit")
+        .withArgs(bob, alice, token.address, ethBridge.address, 100000);
 
       const aliceBalance = await ethBridge.balance(alice, token.address);
       assert.equal(Number(aliceBalance), 100000);
@@ -237,7 +237,7 @@ describe("Bridge", function () {
     });
   });
 
-  describe("withdrawFromBridge", function () {
+  describe("withdraw", function () {
     it("reverts if token is not supported", async function () {
       let withdrawData = {
         token: token.address,
@@ -245,7 +245,7 @@ describe("Bridge", function () {
       };
 
       await expect(
-        polygonBridge.connect(aliceSigner).withdrawFromBridge(withdrawData)
+        polygonBridge.connect(aliceSigner).withdraw(withdrawData)
       ).to.be.reverted;
     });
 
@@ -259,7 +259,7 @@ describe("Bridge", function () {
       };
 
       await expect(
-        polygonBridge.connect(bobSigner).withdrawFromBridge(withdrawData)
+        polygonBridge.connect(bobSigner).withdraw(withdrawData)
       ).to.be.reverted;
     });
 
@@ -304,9 +304,9 @@ describe("Bridge", function () {
         .createWrappedToken(token.address, "WShark", "WSHARK");
 
       await expect(
-        polygonBridge.connect(bobSigner).withdrawFromBridge(withdrawData)
+        polygonBridge.connect(bobSigner).withdraw(withdrawData)
       )
-        .to.emit(polygonBridge, "WithdrawWithMint")
+        .to.emit(polygonBridge, "Withdraw")
         .withArgs(bob, token.address, 100000);
 
       let wrappedTokenAddress = await polygonBridge.tokenToWrappedToken(
@@ -354,9 +354,9 @@ describe("Bridge", function () {
       };
 
       await expect(
-        ethBridge.connect(aliceSigner).withdrawFromBridge(withdrawData)
+        ethBridge.connect(aliceSigner).withdraw(withdrawData)
       )
-        .to.emit(ethBridge, "WithdrawWithTransfer")
+        .to.emit(ethBridge, "Withdraw")
         .withArgs(alice, token.address, 100000);
 
       const aliceBalance = await token.balanceOf(alice);

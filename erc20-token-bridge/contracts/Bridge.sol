@@ -35,25 +35,24 @@ contract Bridge is IBridge {
     }
 
     modifier validateBalance(
-        address from,
         address token,
         uint256 amount
     ) {
-        if (balance[from][token] < amount) {
+        if (balance[msg.sender][token] < amount) {
             revert InsufficientBalance();
         }
         _;
     }
 
-    modifier isBridge(address caller) {
-        if (!bridges[caller]) {
+    modifier isBridge() {
+        if (!bridges[msg.sender]) {
             revert NoPermission();
         }
         _;
     }
 
-    modifier isAdmin(address caller) {
-        if (caller != admin) {
+    modifier isAdmin() {
+        if (msg.sender != admin) {
             revert NoPermission();
         }
         _;
@@ -93,39 +92,30 @@ contract Bridge is IBridge {
                 address(this),
                 _depositData.amount
             );
-            IBridge(_depositData.targetBridge).increaseBalance(
-                _depositData.to,
-                _depositData.token,
-                _depositData.amount
-            );
-            emit DepositWithTransfer(
-                msg.sender,
-                _depositData.token,
-                _depositData.targetBridge,
-                _depositData.amount
-            );
         } else {
             Token(wrappedToken).burnFrom(msg.sender, _depositData.amount);
-            IBridge(_depositData.targetBridge).increaseBalance(
-                _depositData.to,
-                _depositData.token,
-                _depositData.amount
-            );
-            emit DepositWithBurn(
-                msg.sender,
-                _depositData.token,
-                _depositData.targetBridge,
-                _depositData.amount
-            );
         }
+
+        IBridge(_depositData.targetBridge).increaseBalance(
+            _depositData.to,
+            _depositData.token,
+            _depositData.amount
+        );
+        emit Deposit(
+            msg.sender,
+            _depositData.to,
+            _depositData.token,
+            _depositData.targetBridge,
+            _depositData.amount
+        );
     }
 
-    function withdrawFromBridge(
+    function withdraw(
         WithdrawData calldata _withdrawData
     )
         external
         validateToken(_withdrawData.token)
-        validateBalance(msg.sender, _withdrawData.token, _withdrawData.amount)
+        validateBalance(_withdrawData.token, _withdrawData.amount)
     {
         balance[msg.sender][_withdrawData.token] -= _withdrawData.amount;
 
@@ -137,34 +127,26 @@ contract Bridge is IBridge {
                 msg.sender,
                 _withdrawData.amount
             );
-            emit WithdrawWithTransfer(
-                msg.sender,
-                _withdrawData.token,
-                _withdrawData.amount
-            );
         } else {
             Token(wrappedToken).mint(msg.sender, _withdrawData.amount);
-            emit WithdrawWithMint(
-                msg.sender,
-                _withdrawData.token,
-                _withdrawData.amount
-            );
         }
+
+        emit Withdraw(msg.sender, _withdrawData.token, _withdrawData.amount);
     }
 
     function increaseBalance(
         address to,
         address token,
         uint256 amount
-    ) external isBridge(msg.sender) {
+    ) external isBridge {
         balance[to][token] += amount;
     }
 
-    function addBridge(address _bridge) external isAdmin(msg.sender) {
+    function addBridge(address _bridge) external isAdmin {
         bridges[_bridge] = true;
     }
 
-    function addToken(address _token) external isAdmin(msg.sender) {
+    function addToken(address _token) external isAdmin {
         supportedTokens[_token] = true;
     }
 
@@ -172,12 +154,12 @@ contract Bridge is IBridge {
         address token,
         string calldata name,
         string calldata symbol
-    ) external isAdmin(msg.sender) {
+    ) external isAdmin {
         Token wrappedToken = new Token(name, symbol, address(this));
         tokenToWrappedToken[token] = address(wrappedToken);
     }
 
-    function updateAdmin(address _admin) external isAdmin(msg.sender) {
+    function updateAdmin(address _admin) external isAdmin {
         admin = _admin;
     }
 }
