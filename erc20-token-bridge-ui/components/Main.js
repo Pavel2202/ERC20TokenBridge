@@ -635,18 +635,18 @@ const Main = () => {
         type: "function",
       },
     ];
-    const token = new ethers.Contract(tokenAddress, tokenAbi, provider);
+    const token = new ethers.Contract(tokenAddress, tokenAbi, provider.getSigner());
 
     await token.functions.mint(account, ethers.utils.parseUnits("100", 18));
   }
 
   async function setupContracts() {
     await setup();
-    const ethBridge = new ethers.Contract(ethBridgeAddress, abi, provider);
+    const ethBridge = new ethers.Contract(ethBridgeAddress, abi, provider.getSigner());
     const polygonBridge = new ethers.Contract(
       polygonBridgeAddress,
       abi,
-      provider
+      provider.getSigner()
     );
 
     let tx = await ethBridge.functions.addToken(tokenAddress);

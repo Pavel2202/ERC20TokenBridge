@@ -2,9 +2,9 @@ import { ConnectButton } from "web3uikit";
 
 const Header = () => {
   return (
-    <div>
-      <h1>Decentralized Lottery</h1>
-      <div>
+    <div className="p5 border-b-2 flex flex-row">
+      <h1 className="py-4 px-4 font-bold text-3xl">ERC20 Token Bridge</h1>
+      <div className="ml-auto py-2 px-4">
         <ConnectButton moralisAuth={false} />
       </div>
     </div>
