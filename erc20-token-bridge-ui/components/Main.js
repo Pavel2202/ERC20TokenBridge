@@ -635,14 +635,22 @@ const Main = () => {
         type: "function",
       },
     ];
-    const token = new ethers.Contract(tokenAddress, tokenAbi, provider.getSigner());
+    const token = new ethers.Contract(
+      tokenAddress,
+      tokenAbi,
+      provider.getSigner()
+    );
 
     await token.functions.mint(account, ethers.utils.parseUnits("100", 18));
   }
 
   async function setupContracts() {
     await setup();
-    const ethBridge = new ethers.Contract(ethBridgeAddress, abi, provider.getSigner());
+    const ethBridge = new ethers.Contract(
+      ethBridgeAddress,
+      abi,
+      provider.getSigner()
+    );
     const polygonBridge = new ethers.Contract(
       polygonBridgeAddress,
       abi,
@@ -681,35 +689,76 @@ const Main = () => {
   return (
     <div>
       <form onSubmit={depositToBridgeCall}>
-        <div>
-          <label>To</label>
-          <input type="text" id="to" name="to"></input>
+        <div className="mb-6">
+          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+            To
+          </label>
+          <input
+            type="text"
+            id="to"
+            name="to"
+            className="w-1/4 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          ></input>
         </div>
-        <div>
-          <label>Token</label>
-          <select name="token" id="token">
-            <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">SHARK</option>
+        <div className="inline-block relative w-64 mb-6">
+          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+            Token
+          </label>
+          <select
+            name="token"
+            id="token"
+            className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">
+              SHARK
+            </option>
           </select>
         </div>
-        <div>
-          <label>Amount</label>
-          <input type="text" id="amount" name="amount"></input>
+        <div className="mb-6">
+          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+            Amount
+          </label>
+          <input
+            type="text"
+            id="amount"
+            name="amount"
+            className="w-1/8 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          ></input>
         </div>
-        <button>SEND</button>
+        <button className="shadow bg-lime-500 hover:bg-lime-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded">
+          SEND
+        </button>
       </form>
 
       <form onSubmit={withdrawFromBridgeCall}>
-        <div>
-          <label>Token</label>
-          <select name="token" id="token">
-            <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">SHARK</option>
+        <div className="inline-block relative w-64 mb-6">
+          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+            Token
+          </label>
+          <select
+            name="token"
+            id="token"
+            className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">
+              SHARK
+            </option>
           </select>
         </div>
-        <div>
-          <label>Amount</label>
-          <input type="text" id="amount" name="amount"></input>
+        <div className="mb-6">
+          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+            Amount
+          </label>
+          <input
+            type="text"
+            id="amount"
+            name="amount"
+            className="w-1/8 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          ></input>
         </div>
-        <button>CLAIM</button>
+        <button className="shadow bg-lime-500 hover:bg-lime-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded">
+          CLAIM
+        </button>
       </form>
 
       <div>
