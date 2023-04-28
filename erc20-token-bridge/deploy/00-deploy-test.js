@@ -27,7 +27,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     const token = await deploy("Token", {
       from: deployer,
-      args: ["SharkToken", "SHARK", deployer],
+      args: ["TokenShark", "SHARK", deployer],
       log: true,
       waitConfirmations: network.config.blockConfirmations || 1,
     });

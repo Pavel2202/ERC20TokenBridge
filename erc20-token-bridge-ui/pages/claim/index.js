@@ -1,7 +1,7 @@
 import Head from "next/head";
 
 import Header from "@/components/Header";
-import HomePage from "@/components/Home";
+import Claim from "@/components/Claim";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -13,11 +13,11 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-        <Header />
-        <main>
-          <HomePage />
-        </main>
-          <Footer />
+      <Header />
+      <main>
+        <Claim />
+      </main>
+      <Footer />
     </>
   );
 }
