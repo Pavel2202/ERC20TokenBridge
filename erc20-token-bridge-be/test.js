@@ -386,7 +386,7 @@ const main = async () => {
     console.log(token);
     console.log(targetBridge);
     console.log(amount);
-  })
+  });
 };
 
 main();
