@@ -1,12 +1,12 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
-import { useWeb3Contract } from "react-moralis";
 import { addresses, abi } from "@/constants";
 
 const Claim = () => {
   let account;
 
   const [provider, setProvider] = useState({});
+  const [tranfers, setTransfers] = useState([]);
 
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
@@ -26,6 +26,8 @@ const Claim = () => {
 
   async function withdrawFromBridgeCall(e) {
     e.preventDefault();
+    await fetch("http://localhost:3001/transfers").then((res) => res.json()).then((data) => setTransfers(data));
+    console.log(tranfers);
     await setup();
     const polygonBridge = new ethers.Contract(
       "0x51DCEF1dFA8BE29f2E94351A081E77480896adE6",
@@ -43,15 +45,15 @@ const Claim = () => {
       amount: ethers.utils.parseUnits("1", 18),
     };
 
-    console.log(
-      await polygonBridge.functions.tokenToWrappedToken(tokenAddress)
-    );
+    // console.log(
+    //   await polygonBridge.functions.tokenToWrappedToken(tokenAddress)
+    // );
 
-    let tx = await polygonBridge.functions.withdraw(withdrawData, {
-      gasLimit: 30000000,
-    });
-    await tx.wait(1);
-    console.log(tx);
+    // let tx = await polygonBridge.functions.withdraw(withdrawData, {
+    //   gasLimit: 30000000,
+    // });
+    // await tx.wait(1);
+    // console.log(tx);
   }
 
   return (

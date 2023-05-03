@@ -1,6 +1,5 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
-import { useWeb3Contract } from "react-moralis";
 import { addresses, abi } from "@/constants";
 
 const Transfer = () => {
@@ -120,8 +119,8 @@ const Transfer = () => {
     console.log(deadline);
 
     let depositData = {
-      to: account,
-      token: tokenAddress,
+      to: to,
+      token: token,
       targetBridge: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       amount: ethers.utils.parseUnits(amount, 18),
       deadline: deadline,
@@ -634,7 +633,7 @@ const Transfer = () => {
 
   return (
     <>
-      <form onSubmit={depositToBridgeCall}>
+      <form method="POST" onSubmit={depositToBridgeCall}>
         <div className="mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
             To

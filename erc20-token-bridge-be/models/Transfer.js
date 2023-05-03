@@ -6,6 +6,7 @@ const transferSchema = new Schema({
   token: { type: String },
   targetBridge: { type: String },
   amount: { type: Number },
+  isClaimed: { type: Boolean },
 });
 
 const Transfer = model("Transfer", transferSchema);
