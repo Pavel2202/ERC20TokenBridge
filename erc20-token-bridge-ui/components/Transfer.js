@@ -111,7 +111,7 @@ const Transfer = () => {
       account,
       ethBridge.address,
       provider,
-      ethers.utils.parseUnits("1", 18)
+      ethers.utils.parseUnits(amount, 18)
     );
 
     console.log(v);
@@ -123,7 +123,7 @@ const Transfer = () => {
       to: account,
       token: tokenAddress,
       targetBridge: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      amount: ethers.utils.parseUnits("1", 18),
+      amount: ethers.utils.parseUnits(amount, 18),
       deadline: deadline,
     };
 
@@ -629,7 +629,7 @@ const Transfer = () => {
       provider.getSigner()
     );
 
-    await token.functions.mint(account, ethers.utils.parseUnits("1", 18));
+    await token.functions.mint(account, ethers.utils.parseUnits("100", 18));
   }
 
   return (

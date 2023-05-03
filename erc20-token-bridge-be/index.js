@@ -1,4 +1,8 @@
+const express = require("express");
+const databaseConfig = require("./config/database");
+
 const { ethers } = require("ethers");
+const Transfer = require("./models/Transfer");
 
 const address = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545/");
@@ -377,15 +381,36 @@ const abi = [
   },
 ];
 
+start();
+
+async function start() {
+  const app = express();
+
+  await databaseConfig(app);
+
+  app.listen(3001, () => console.log("Server running on port 3001"));
+}
+
 const contract = new ethers.Contract(address, abi, provider);
 
 const main = async () => {
-  await contract.on("Deposit", (from, to, token, targetBridge, amount) => {
-    console.log(from);
-    console.log(to);
-    console.log(token);
-    console.log(targetBridge);
-    console.log(amount);
+  await contract.on("Deposit", async (from, to, token, targetBridge, amount) => {
+    // console.log(from);
+    // console.log(to);
+    // console.log(token);
+    // console.log(targetBridge);
+    // console.log(amount);
+
+    const data = {
+      from: from,
+      to: to,
+      token: token,
+      targetBridge: targetBridge,
+      amount: amount,
+    };
+
+    const transfer = new Transfer(data);
+    await transfer.save();
   });
 };
 
