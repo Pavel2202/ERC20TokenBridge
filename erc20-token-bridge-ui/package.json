@@ -13,6 +13,7 @@
     "@web3modal/react": "^2.3.0",
     "bn.js": "^5.2.1",
     "buffer": "^6.0.3",
+    "dotenv": "^16.0.3",
     "ethers": "^5",
     "ethers-eip712": "^0.2.0",
     "moralis": "^2.18.2",

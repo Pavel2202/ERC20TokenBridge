@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 
 import "./IBridge.sol";
 import "./Token.sol";
-import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 error TokenNotSupported();
 error InvalidAmount();
@@ -17,7 +16,6 @@ contract Bridge is IBridge {
     mapping(address => bool) public bridges;
     mapping(address => bool) public supportedTokens;
     mapping(address => address) public tokenToWrappedToken;
-    mapping(address => uint256) public tokenNonce;
     mapping(address => mapping(address => uint256)) public balance;
 
     modifier validateToken(address _token) {
@@ -84,7 +82,6 @@ contract Bridge is IBridge {
             _signature.r,
             _signature.s
         );
-        tokenNonce[_depositData.token] += 1;
 
         if (!isWrapped) {
             Token(_depositData.token).transferFrom(

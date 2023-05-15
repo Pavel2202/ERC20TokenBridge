@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
-import { addresses, abi } from "@/constants";
+import { addresses, abi } from "@/constants/Bridge";
 
 const Claim = () => {
   let account;
@@ -26,7 +26,9 @@ const Claim = () => {
 
   async function withdrawFromBridgeCall(e) {
     e.preventDefault();
-    await fetch("http://localhost:3001/transfers").then((res) => res.json()).then((data) => setTransfers(data));
+    await fetch("http://localhost:3001/transfers")
+      .then((res) => res.json())
+      .then((data) => setTransfers(data));
     console.log(tranfers);
     await setup();
     const polygonBridge = new ethers.Contract(
