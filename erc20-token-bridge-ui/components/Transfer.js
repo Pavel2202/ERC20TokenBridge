@@ -135,16 +135,16 @@ const Transfer = () => {
     e.preventDefault();
     await setup();
 
-    const ethBridge = new ethers.Contract(
+    const bridge = new ethers.Contract(
       "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       bridgeAbi,
       provider.getSigner()
     );
 
-    await ethBridge.functions.addBridge(
+    await bridge.functions.addBridge(
       "0x5FbDB2315678afecb367f032d93F642f64180aa3"
     );
-    await ethBridge.functions.addToken(tokenAddress);
+    await bridge.functions.addToken(tokenAddress);
 
     const token = new ethers.Contract(
       tokenAddress,
@@ -157,7 +157,7 @@ const Transfer = () => {
 
   return (
     <>
-      <form method="POST" onSubmit={depositToBridgeCall}>
+      <form onSubmit={depositToBridgeCall}>
         <div className="mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
             To
