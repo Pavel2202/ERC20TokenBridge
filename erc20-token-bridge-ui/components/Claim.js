@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAddresses, tokenAbi } from "@/constants/Token";
+import TransferList, { transferList } from "./TransferList";
 
 const Claim = () => {
   let account;
@@ -65,10 +66,6 @@ const Claim = () => {
 
     console.log(chainId);
 
-    // await fetch("http://localhost:3001/transfers")
-    //   .then((res) => res.json())
-    //   .then((data) => setTransfers(data));
-
     await setup();
 
     const bridge = new ethers.Contract(
@@ -92,15 +89,19 @@ const Claim = () => {
 
     await bridge.functions.createWrappedToken(token, "WSHARK", "WSHARK");
 
-    console.log(
-      await bridge.functions.tokenToWrappedToken(token)
-    );
+    console.log(await bridge.functions.tokenToWrappedToken(token));
 
     let tx = await bridge.functions.withdraw(withdrawData, {
       gasLimit: 30000000,
     });
     await tx.wait(1);
     console.log(tx);
+  }
+
+  async function generateTransfers() {
+    await fetch("http://localhost:3001/transfers")
+      .then((res) => res.json())
+      .then((data) => setTransfers(data));
   }
 
   return (
@@ -136,10 +137,22 @@ const Claim = () => {
         </button>
       </form>
 
-      <button onClick={() => changeNetwork("polygon")}>Change to Mumbai</button>
-      <button onClick={() => changeNetwork("sepolia")}>
-        Change to Sepolia
-      </button>
+      <div>
+        <button onClick={() => changeNetwork("polygon")}>
+          Change to Mumbai
+        </button>
+        <button onClick={() => changeNetwork("sepolia")}>
+          Change to Sepolia
+        </button>
+      </div>
+
+      <div>
+        <button onClick={generateTransfers}>Get All</button>
+      </div>
+
+      <div>
+        <TransferList transfers={tranfers}></TransferList>
+      </div>
     </>
   );
 };

@@ -27,7 +27,8 @@ interface IBridge {
         address receiver,
         address indexed token,
         address indexed targetBridge,
-        uint256 amount
+        uint256 amount,
+        uint256 blockNumber
     );
 
     event Withdraw(

@@ -32,10 +32,7 @@ contract Bridge is IBridge {
         _;
     }
 
-    modifier validateBalance(
-        address token,
-        uint256 amount
-    ) {
+    modifier validateBalance(address token, uint256 amount) {
         if (balance[msg.sender][token] < amount) {
             revert InsufficientBalance();
         }
@@ -103,7 +100,8 @@ contract Bridge is IBridge {
             _depositData.to,
             _depositData.token,
             _depositData.targetBridge,
-            _depositData.amount
+            _depositData.amount,
+            block.number
         );
     }
 
