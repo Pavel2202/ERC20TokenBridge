@@ -120,6 +120,8 @@ const Transfer = () => {
       deadline: deadline,
     };
 
+    console.log(depositData);
+
     let signatureData = {
       v: v,
       r: r,

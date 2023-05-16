@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAddresses, tokenAbi } from "@/constants/Token";
-import TransferList, { transferList } from "./TransferList";
+import TransferList from "./TransferList";
 
 const Claim = () => {
   let account;
