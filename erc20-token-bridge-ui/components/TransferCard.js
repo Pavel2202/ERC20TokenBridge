@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
+import { tokenAddresses } from "@/constants/Token";
 
 const TransferCard = ({ transfer }) => {
   const [provider, setProvider] = useState({});
@@ -13,33 +14,42 @@ const TransferCard = ({ transfer }) => {
 
   async function withdrawFromBridgeCall(e) {
     e.preventDefault();
-
-    let divElement = e.target.parentElement;
-    let spanElement = divElement.children[0];
-
-    let token = spanElement.children[2].textContent;
-    let amount = spanElement.children[3].textContent;
-
-    let bridgeAddress = bridgeAddresses[31337][0];
-    console.log(bridgeAbi);
-    console.log(provider);
+    const chainId = await (await provider.getNetwork()).chainId;
 
     const bridge = new ethers.Contract(
-      bridgeAddress,
+      bridgeAddresses[chainId][1],
       bridgeAbi,
       provider.getSigner()
     );
 
+    let spanElement = e.target.parentElement.children[0];
+    let tokenData = spanElement.children[2].textContent
+      .split(" ")[1]
+      .split("...");
+    let amount = spanElement.children[3].textContent.split(" ")[1];
+
+    let allTokens = tokenAddresses[chainId];
+
+    let token;
+    allTokens.forEach((x) => {
+      if (x.includes(tokenData[0]) && x.includes(tokenData[1])) {
+        token = x;
+      }
+    });
+    amount = amount + "000000000000000000";
+
     let withdrawData = {
       token: token,
-      amount: amount,
+      amount: amount
     };
 
-    //console.log(await bridge.functions.tokenToWrappedToken(token));
+    console.log(withdrawData);
 
-    await bridge.functions.withdraw(withdrawData, {
+    let tx = await bridge.functions.withdraw(withdrawData, {
       gasLimit: 30000000,
     });
+    await tx.wait(1);
+    console.log(tx);
   }
 
   return (
@@ -55,7 +65,7 @@ const TransferCard = ({ transfer }) => {
         </span>
         <span className="mr-6">
           Token: {transfer.token.slice(0, 6)}...
-          {transfer.from.slice(transfer.token.length - 4)}
+          {transfer.token.slice(transfer.token.length - 4)}
         </span>{" "}
         <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
       </span>

@@ -20,7 +20,7 @@ const Transfer = () => {
     chainId = await (await provider.getNetwork()).chainId;
     account = ethereum.selectedAddress;
     bridgeAddress = bridgeAddresses[chainId][0];
-    tokenAddress = tokenAddresses[chainId];
+    tokenAddress = tokenAddresses[chainId][0];
   }
 
   async function onPermit(owner, spender, provider, amount, tokenContract) {

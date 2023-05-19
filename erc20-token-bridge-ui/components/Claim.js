@@ -5,8 +5,6 @@ import { tokenAddresses, tokenAbi } from "@/constants/Token";
 import TransferList from "./TransferList";
 
 const Claim = () => {
-  let account;
-
   const [provider, setProvider] = useState({});
   const [tranfers, setTransfers] = useState([]);
 
@@ -52,21 +50,12 @@ const Claim = () => {
     }
   }, []);
 
-  let chainId, bridgeAddress, tokenAddress;
-
-  async function setup() {
-    chainId = await (await provider.getNetwork()).chainId;
-    account = ethereum.selectedAddress;
-    bridgeAddress = bridgeAddresses[31337][1];
-    tokenAddress = tokenAddresses[chainId];
-  }
-
   async function withdrawFromBridgeCall(e) {
     e.preventDefault();
-    await setup();
+    const chainId = await (await provider.getNetwork()).chainId;
 
     const bridge = new ethers.Contract(
-      bridgeAddress,
+      bridgeAddresses[chainId][1],
       bridgeAbi,
       provider.getSigner()
     );
@@ -80,8 +69,6 @@ const Claim = () => {
       token: token,
       amount: ethers.utils.parseUnits(amount, 18),
     };
-
-    console.log(await bridge.functions.tokenToWrappedToken(token));
 
     let tx = await bridge.functions.withdraw(withdrawData, {
       gasLimit: 30000000,

@@ -12,16 +12,6 @@ const TransferList = ({ transfers }) => {
     }
   }, []);
 
-  async function setup() {
-    const bridge = new ethers.Contract(
-      bridgeAddresses[31337][0],
-      bridgeAbi,
-      provider.getSigner()
-      );
-      console.log(bridge);
-    await bridge.functions.createWrappedToken("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0", "WSHARK", "WSHARK");
-  }
-
   return (
     <>
       <div>
@@ -33,7 +23,6 @@ const TransferList = ({ transfers }) => {
           </div>
         )}
       </div>
-      <button onClick={setup}>SETUP</button>
     </>
   );
 };
