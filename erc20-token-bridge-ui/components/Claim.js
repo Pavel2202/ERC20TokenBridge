@@ -57,15 +57,12 @@ const Claim = () => {
   async function setup() {
     chainId = await (await provider.getNetwork()).chainId;
     account = ethereum.selectedAddress;
-    bridgeAddress = bridgeAddresses[31337][0];
+    bridgeAddress = bridgeAddresses[31337][1];
     tokenAddress = tokenAddresses[chainId];
   }
 
   async function withdrawFromBridgeCall(e) {
     e.preventDefault();
-
-    console.log(chainId);
-
     await setup();
 
     const bridge = new ethers.Contract(
@@ -84,11 +81,6 @@ const Claim = () => {
       amount: ethers.utils.parseUnits(amount, 18),
     };
 
-    console.log(withdrawData);
-    console.log(bridge);
-
-    await bridge.functions.createWrappedToken(token, "WSHARK", "WSHARK");
-
     console.log(await bridge.functions.tokenToWrappedToken(token));
 
     let tx = await bridge.functions.withdraw(withdrawData, {
@@ -101,7 +93,11 @@ const Claim = () => {
   async function generateTransfers() {
     await fetch("http://localhost:3001/transfers")
       .then((res) => res.json())
-      .then((data) => setTransfers(data));
+      .then((data) =>
+        setTransfers(
+          data.filter((x) => x.to.toLowerCase() == ethereum.selectedAddress)
+        )
+      );
   }
 
   return (

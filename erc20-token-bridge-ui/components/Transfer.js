@@ -25,7 +25,7 @@ const Transfer = () => {
 
   async function onPermit(owner, spender, provider, amount, tokenContract) {
     const nonce = await tokenContract.nonces(owner);
-    const tokenName = await tokenContract.name();
+    const tokenName = (await tokenContract.name()).toString();
     const deadline = +new Date() + 60 * 60;
 
     const domainType = [
@@ -115,12 +115,10 @@ const Transfer = () => {
     let depositData = {
       to: to,
       token: token,
-      targetBridge: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      targetBridge: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       amount: ethers.utils.parseUnits(amount, 18),
       deadline: deadline,
     };
-
-    console.log(depositData);
 
     let signatureData = {
       v: v,
@@ -144,9 +142,22 @@ const Transfer = () => {
     );
 
     await bridge.functions.addBridge(
+      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+    );
+
+    let recepientBridge = new ethers.Contract(
+      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      bridgeAbi,
+      provider.getSigner()
+    );
+
+    await recepientBridge.functions.addBridge(
       "0x5FbDB2315678afecb367f032d93F642f64180aa3"
     );
     await bridge.functions.addToken(tokenAddress);
+    await recepientBridge.functions.addToken(tokenAddress);
+
+    await recepientBridge.functions.createWrappedToken(tokenAddress, "WSHARK", "WSHARK");
 
     const token = new ethers.Contract(
       tokenAddress,

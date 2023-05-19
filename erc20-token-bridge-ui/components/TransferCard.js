@@ -3,14 +3,6 @@ import { useState, useEffect } from "react";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 
 const TransferCard = ({ transfer }) => {
-  // const from =
-  //   transfer.from.slice(0, 6) +
-  //   "..." +
-  //   transfer.from.slice(transfer.from.length - 4);
-  // const to =
-  //   transfer.to.slice(0, 6) + "..." + transfer.to.slice(transfer.to.length - 4);
-  // const amount = transfer.amount / 10 ** 18;
-
   const [provider, setProvider] = useState({});
 
   useEffect(() => {
@@ -23,13 +15,17 @@ const TransferCard = ({ transfer }) => {
     e.preventDefault();
 
     let divElement = e.target.parentElement;
-    let from = divElement.children[0].textContent;
-    let to = divElement.children[1].textContent;
-    let token = divElement.children[2].textContent;
-    let amount = divElement.children[3].textContent;
+    let spanElement = divElement.children[0];
+
+    let token = spanElement.children[2].textContent;
+    let amount = spanElement.children[3].textContent;
+
+    let bridgeAddress = bridgeAddresses[31337][0];
+    console.log(bridgeAbi);
+    console.log(provider);
 
     const bridge = new ethers.Contract(
-      bridgeAddresses[31337][0],
+      bridgeAddress,
       bridgeAbi,
       provider.getSigner()
     );
@@ -39,24 +35,37 @@ const TransferCard = ({ transfer }) => {
       amount: amount,
     };
 
-    console.log(await bridge.functions.tokenToWrappedToken(token));
+    //console.log(await bridge.functions.tokenToWrappedToken(token));
 
-    let tx = await bridge.functions.withdraw(withdrawData, {
+    await bridge.functions.withdraw(withdrawData, {
       gasLimit: 30000000,
     });
   }
 
   return (
-    <>
-      <div>
-        <div>
-          <span>{transfer.from}</span> <span>{transfer.to}</span>{" "}
-          <span>{transfer.token}</span> <span>{transfer.amount}</span>
-          <button onClick={withdrawFromBridgeCall}>Claim</button>
-        </div>
-      </div>
-      
-    </>
+    <div>
+      <span className="w-96 border-solid border-4 rounded-md border-black">
+        <span className="mr-6">
+          From: {transfer.from.slice(0, 6)}...
+          {transfer.from.slice(transfer.from.length - 4)}
+        </span>{" "}
+        <span className="mr-6">
+          To: {transfer.to.slice(0, 6)}...
+          {transfer.from.slice(transfer.to.length - 4)}
+        </span>
+        <span className="mr-6">
+          Token: {transfer.token.slice(0, 6)}...
+          {transfer.from.slice(transfer.token.length - 4)}
+        </span>{" "}
+        <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
+      </span>
+      <button
+        className="shadow bg-lime-500 hover:bg-lime-400 focus:shadow-outline focus:outline-none text-white font-bold rounded"
+        onClick={withdrawFromBridgeCall}
+      >
+        Claim
+      </button>
+    </div>
   );
 };
 
