@@ -60,6 +60,8 @@ const Claim = () => {
       provider.getSigner()
     );
 
+    console.log(bridge);
+
     let formData = new FormData(e.target);
 
     let token = formData.get("token");
@@ -69,6 +71,8 @@ const Claim = () => {
       token: token,
       amount: ethers.utils.parseUnits(amount, 18),
     };
+
+    console.log(withdrawData);
 
     let tx = await bridge.functions.withdraw(withdrawData, {
       gasLimit: 30000000,
@@ -102,6 +106,7 @@ const Claim = () => {
             <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">
               SHARK
             </option>
+            <option value="0xCafac3dD18aC6c6e92c921884f9E4176737C052c">WSHARK</option>
           </select>
         </div>
         <div className="mb-6">

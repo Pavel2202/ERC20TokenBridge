@@ -86,20 +86,23 @@ const Transfer = () => {
     e.preventDefault();
     await setup();
 
+    let formData = new FormData(e.target);
+
+    let to = formData.get("to");
+    let targetBridgeIndex = formData.get("bridge");
+    let targetBridge = bridgeAddresses[chainId][targetBridgeIndex];
+    let tokenIndex = formData.get("token");
+    let token = tokenAddresses[chainId][tokenIndex];
+    let amount = formData.get("amount");
+
     const bridge = new ethers.Contract(
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      bridgeAddresses[chainId][0],
       bridgeAbi,
       provider.getSigner()
     );
 
-    let formData = new FormData(e.target);
-
-    let to = formData.get("to");
-    let token = formData.get("token");
-    let amount = formData.get("amount");
-
     const tokenContract = new ethers.Contract(
-      tokenAddress,
+      token,
       tokenAbi,
       provider.getSigner()
     );
@@ -115,10 +118,12 @@ const Transfer = () => {
     let depositData = {
       to: to,
       token: token,
-      targetBridge: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      targetBridge: targetBridge,
       amount: ethers.utils.parseUnits(amount, 18),
       deadline: deadline,
     };
+
+    console.log(depositData);
 
     let signatureData = {
       v: v,
@@ -157,7 +162,11 @@ const Transfer = () => {
     await bridge.functions.addToken(tokenAddress);
     await recepientBridge.functions.addToken(tokenAddress);
 
-    await recepientBridge.functions.createWrappedToken(tokenAddress, "WSHARK", "WSHARK");
+    await recepientBridge.functions.createWrappedToken(
+      tokenAddress,
+      "WSHARK",
+      "WSHARK"
+    );  
 
     const token = new ethers.Contract(
       tokenAddress,
@@ -184,6 +193,19 @@ const Transfer = () => {
         </div>
         <div className="inline-block relative w-64 mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+            Bridge
+          </label>
+          <select
+            name="bridge"
+            id="bridge"
+            className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="0">Ethereum</option>
+            <option value="1">Polygon</option>
+          </select>
+        </div>
+        <div className="inline-block relative w-64 mb-6">
+          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
             Token
           </label>
           <select
@@ -191,9 +213,8 @@ const Transfer = () => {
             id="token"
             className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
           >
-            <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">
-              SHARK
-            </option>
+            <option value="0">SHARK</option>
+            <option value="1">WSHARK</option>
           </select>
         </div>
         <div className="mb-6">

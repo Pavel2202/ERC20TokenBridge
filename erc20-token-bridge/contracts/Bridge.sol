@@ -62,7 +62,6 @@ contract Bridge is IBridge {
         Signature calldata _signature
     )
         external
-        validateToken(_depositData.token)
         validateAmount(_depositData.amount)
     {
         address wrappedToken = tokenToWrappedToken[_depositData.token];
@@ -90,11 +89,6 @@ contract Bridge is IBridge {
             Token(wrappedToken).burnFrom(msg.sender, _depositData.amount);
         }
 
-        IBridge(_depositData.targetBridge).increaseBalance(
-            _depositData.to,
-            _depositData.token,
-            _depositData.amount
-        );
         emit Deposit(
             msg.sender,
             _depositData.to,
@@ -109,11 +103,7 @@ contract Bridge is IBridge {
         WithdrawData calldata _withdrawData
     )
         external
-        validateToken(_withdrawData.token)
-        validateBalance(_withdrawData.token, _withdrawData.amount)
     {
-        balance[msg.sender][_withdrawData.token] -= _withdrawData.amount;
-
         address wrappedToken = tokenToWrappedToken[_withdrawData.token];
         bool isWrapped = wrappedToken != address(0);
 
