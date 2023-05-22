@@ -40,7 +40,7 @@ const TransferCard = ({ transfer }) => {
 
     let withdrawData = {
       token: token,
-      amount: amount
+      amount: amount,
     };
 
     console.log(withdrawData);
@@ -50,6 +50,20 @@ const TransferCard = ({ transfer }) => {
     });
     await tx.wait(1);
     console.log(tx);
+
+    let response = await fetch(
+      `http://localhost:3001/transfers/${transfer._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ ...transfer }),
+      }
+    );
+
+    let result = await response.json();
+    console.log(result);
   }
 
   return (

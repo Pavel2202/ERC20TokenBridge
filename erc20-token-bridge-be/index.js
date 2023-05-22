@@ -2,7 +2,7 @@ const express = require("express");
 const databaseConfig = require("./config/database");
 const routesConfig = require("./config/routes");
 const { bridgeAddress, bridgeAbi } = require("./constants/Bridge");
-const cors = require("./middlewares/cors");
+const cors = require("cors")
 
 const { ethers } = require("ethers");
 const Transfer = require("./models/Transfer");

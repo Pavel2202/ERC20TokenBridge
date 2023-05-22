@@ -86,7 +86,7 @@ const Claim = () => {
       .then((res) => res.json())
       .then((data) =>
         setTransfers(
-          data.filter((x) => x.to.toLowerCase() == ethereum.selectedAddress)
+          data.filter((x) => x.to.toLowerCase() == ethereum.selectedAddress && x.isClaimed == false)
         )
       );
   }
