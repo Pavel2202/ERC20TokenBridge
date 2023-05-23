@@ -1,5 +1,5 @@
 require("hardhat-deploy");
-require("@nomiclabs/hardhat-waffle");
+require("@nomicfoundation/hardhat-toolbox");
 require("solidity-coverage");
 require("dotenv").config();
 

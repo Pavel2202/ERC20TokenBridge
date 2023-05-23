@@ -16,7 +16,7 @@ contract Token is ERC20, ERC20Permit, ERC20Burnable, Ownable {
         transferOwnership(_owner);
     }
 
-    function mint(address to, uint256 amount) external onlyOwner {
+    function mint(address to, uint256 amount) external virtual onlyOwner {
         _mint(to, amount);
     }
 }

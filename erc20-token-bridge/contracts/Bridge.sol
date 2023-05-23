@@ -170,6 +170,7 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
     ) external onlyOwner {
         Token wrappedToken = new Token(name, symbol, address(this));
         tokenToWrappedToken[token] = address(wrappedToken);
+        supportedTokens[address(wrappedToken)] = true;
     }
 
     function updateOwner(address _owner) external onlyOwner {
