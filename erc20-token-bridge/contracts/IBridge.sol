@@ -22,35 +22,53 @@ interface IBridge {
         uint256 amount;
     }
 
-    event Deposit(
+    event Locked(
         address indexed sender,
         address receiver,
         address indexed token,
         address indexed targetBridge,
-        uint256 amount,
-        uint256 blockNumber
+        uint256 amount
     );
 
-    event Withdraw(
+    event Burned(
+        address indexed sender,
+        address receiver,
+        address indexed token,
+        address indexed targetBridge,
+        uint256 amount
+    );
+
+    event Unlocked(
         address indexed receiver,
         address indexed token,
         uint256 amount
     );
 
-    function deposit(
+    event Minted(
+        address indexed receiver,
+        address indexed token,
+        uint256 amount
+    );
+
+    function lock(
         DepositData calldata _depositData,
         Signature calldata _signature
-    ) external;
+    ) external payable;
 
-    function withdraw(WithdrawData calldata _withdrawData) external;
+    function burn(
+        DepositData calldata _depositData,
+        Signature calldata _signature
+    ) external payable;
 
-    function increaseBalance(
-        address to,
-        address token,
-        uint256 amount
-    ) external;
+    function unlock(WithdrawData calldata _withdrawData) external payable;
+
+    function mint(WithdrawData calldata _withdrawData) external payable;
 
     function addBridge(address _bridge) external;
 
     function addToken(address _token) external;
+
+    function updateOwner(address _owner) external;
+
+    function updateFee(uint256 _fee) external;
 }

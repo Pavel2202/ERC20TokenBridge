@@ -4,19 +4,27 @@ pragma solidity ^0.8.19;
 
 import "./IBridge.sol";
 import "./Token.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+error InsufficientFee();
 error TokenNotSupported();
 error InvalidAmount();
-error InsufficientBalance();
-error NoPermission();
+error InvalidBridge();
 
-contract Bridge is IBridge {
-    address public admin;
+contract Bridge is IBridge, Ownable, ReentrancyGuard {
+    uint256 public fee = 0.0000001 ether;
 
     mapping(address => bool) public bridges;
     mapping(address => bool) public supportedTokens;
     mapping(address => address) public tokenToWrappedToken;
-    mapping(address => mapping(address => uint256)) public balance;
+
+    modifier validateFee() {
+        if (msg.value < fee) {
+            revert InsufficientFee();
+        }
+        _;
+    }
 
     modifier validateToken(address _token) {
         if (!supportedTokens[_token]) {
@@ -32,44 +40,31 @@ contract Bridge is IBridge {
         _;
     }
 
-    modifier validateBalance(address token, uint256 amount) {
-        if (balance[msg.sender][token] < amount) {
-            revert InsufficientBalance();
-        }
-        _;
-    }
-
-    modifier isBridge() {
-        if (!bridges[msg.sender]) {
-            revert NoPermission();
-        }
-        _;
-    }
-
-    modifier isAdmin() {
-        if (msg.sender != admin) {
-            revert NoPermission();
+    modifier validateBridge(address bridge) {
+        if (!bridges[bridge]) {
+            revert InvalidBridge();
         }
         _;
     }
 
     constructor() {
-        admin = msg.sender;
+        transferOwnership(msg.sender);
     }
 
-    function deposit(
+    function lock(
         DepositData calldata _depositData,
         Signature calldata _signature
     )
         external
+        payable
+        override
+        nonReentrant
+        validateFee
+        validateToken(_depositData.token)
+        validateBridge(_depositData.targetBridge)
         validateAmount(_depositData.amount)
     {
-        address wrappedToken = tokenToWrappedToken[_depositData.token];
-        bool isWrapped = wrappedToken != address(0);
-
-        address permitToken = isWrapped ? wrappedToken : _depositData.token;
-
-        Token(permitToken).permit(
+        Token(_depositData.token).permit(
             msg.sender,
             address(this),
             _depositData.amount,
@@ -79,59 +74,92 @@ contract Bridge is IBridge {
             _signature.s
         );
 
-        if (!isWrapped) {
-            Token(_depositData.token).transferFrom(
-                msg.sender,
-                address(this),
-                _depositData.amount
-            );
-        } else {
-            Token(wrappedToken).burnFrom(msg.sender, _depositData.amount);
-        }
+        Token(_depositData.token).transferFrom(
+            msg.sender,
+            address(this),
+            _depositData.amount
+        );
 
-        emit Deposit(
+        emit Locked(
             msg.sender,
             _depositData.to,
             _depositData.token,
             _depositData.targetBridge,
-            _depositData.amount,
-            block.number
+            _depositData.amount
         );
     }
 
-    function withdraw(
+    function burn(
+        DepositData calldata _depositData,
+        Signature calldata _signature
+    )
+        external
+        payable
+        override
+        nonReentrant
+        validateFee
+        validateToken(_depositData.token)
+        validateBridge(_depositData.targetBridge)
+        validateAmount(_depositData.amount)
+    {
+        Token(_depositData.token).permit(
+            msg.sender,
+            address(this),
+            _depositData.amount,
+            _depositData.deadline,
+            _signature.v,
+            _signature.r,
+            _signature.s
+        );
+
+        Token(_depositData.token).burnFrom(msg.sender, _depositData.amount);
+
+        emit Burned(
+            msg.sender,
+            _depositData.to,
+            _depositData.token,
+            _depositData.targetBridge,
+            _depositData.amount
+        );
+    }
+
+    function unlock(
         WithdrawData calldata _withdrawData
     )
         external
+        payable
+        override
+        nonReentrant
+        validateFee
+        validateToken(_withdrawData.token)
+        validateAmount(_withdrawData.amount)
     {
-        address wrappedToken = tokenToWrappedToken[_withdrawData.token];
-        bool isWrapped = wrappedToken != address(0);
+        Token(_withdrawData.token).transfer(msg.sender, _withdrawData.amount);
 
-        if (!isWrapped) {
-            Token(_withdrawData.token).transfer(
-                msg.sender,
-                _withdrawData.amount
-            );
-        } else {
-            Token(wrappedToken).mint(msg.sender, _withdrawData.amount);
-        }
-
-        emit Withdraw(msg.sender, _withdrawData.token, _withdrawData.amount);
+        emit Unlocked(msg.sender, _withdrawData.token, _withdrawData.amount);
     }
 
-    function increaseBalance(
-        address to,
-        address token,
-        uint256 amount
-    ) external isBridge {
-        balance[to][token] += amount;
+    function mint(
+        WithdrawData calldata _withdrawData
+    )
+        external
+        payable
+        override
+        nonReentrant
+        validateFee
+        validateToken(_withdrawData.token)
+        validateAmount(_withdrawData.amount)
+    {
+        Token(_withdrawData.token).mint(msg.sender, _withdrawData.amount);
+
+        emit Minted(msg.sender, _withdrawData.token, _withdrawData.amount);
     }
 
-    function addBridge(address _bridge) external isAdmin {
+    function addBridge(address _bridge) external onlyOwner {
         bridges[_bridge] = true;
     }
 
-    function addToken(address _token) external isAdmin {
+    function addToken(address _token) external onlyOwner {
         supportedTokens[_token] = true;
     }
 
@@ -139,12 +167,16 @@ contract Bridge is IBridge {
         address token,
         string calldata name,
         string calldata symbol
-    ) external isAdmin {
+    ) external onlyOwner {
         Token wrappedToken = new Token(name, symbol, address(this));
         tokenToWrappedToken[token] = address(wrappedToken);
     }
 
-    function updateAdmin(address _admin) external isAdmin {
-        admin = _admin;
+    function updateOwner(address _owner) external onlyOwner {
+        transferOwnership(_owner);
+    }
+
+    function updateFee(uint256 _fee) external onlyOwner {
+        fee = _fee;
     }
 }
