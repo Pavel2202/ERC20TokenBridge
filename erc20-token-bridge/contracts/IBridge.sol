@@ -19,6 +19,8 @@ interface IBridge {
 
     struct WithdrawData {
         address token;
+        string name;
+        string symbol;
         uint256 amount;
     }
 
@@ -60,13 +62,9 @@ interface IBridge {
         Signature calldata _signature
     ) external payable;
 
-    function unlock(WithdrawData calldata _withdrawData) external payable;
+    function unlock(WithdrawData calldata _withdrawData) external;
 
-    function mint(WithdrawData calldata _withdrawData) external payable;
-
-    function addBridge(address _bridge) external;
-
-    function addToken(address _token) external;
+    function mint(WithdrawData calldata _withdrawData) external;
 
     function updateOwner(address _owner) external;
 

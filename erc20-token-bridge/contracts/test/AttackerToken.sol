@@ -47,6 +47,8 @@ contract AttackerToken is Token {
     ) public virtual override returns (bool) {
         IBridge.WithdrawData memory _withdrawData = IBridge.WithdrawData(
             address(this),
+            "WShark",
+            "WShark",
             amount
         );
         IBridge(msg.sender).unlock(_withdrawData);
@@ -56,6 +58,8 @@ contract AttackerToken is Token {
     function mint(address to, uint256 amount) external override {
         IBridge.WithdrawData memory _withdrawData = IBridge.WithdrawData(
             address(this),
+            "WShark",
+            "WShark",
             amount
         );
         IBridge(msg.sender).mint(_withdrawData);

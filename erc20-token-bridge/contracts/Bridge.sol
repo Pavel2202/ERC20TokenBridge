@@ -15,34 +15,11 @@ error InvalidBridge();
 contract Bridge is IBridge, Ownable, ReentrancyGuard {
     uint256 public fee = 0.0000001 ether;
 
-    mapping(address => bool) public bridges;
-    mapping(address => bool) public supportedTokens;
     mapping(address => address) public tokenToWrappedToken;
-
-    modifier validateFee() {
-        if (msg.value < fee) {
-            revert InsufficientFee();
-        }
-        _;
-    }
-
-    modifier validateToken(address _token) {
-        if (!supportedTokens[_token]) {
-            revert TokenNotSupported();
-        }
-        _;
-    }
 
     modifier validateAmount(uint256 amount) {
         if (amount == 0) {
             revert InvalidAmount();
-        }
-        _;
-    }
-
-    modifier validateBridge(address bridge) {
-        if (!bridges[bridge]) {
-            revert InvalidBridge();
         }
         _;
     }
@@ -59,11 +36,12 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
         payable
         override
         nonReentrant
-        validateFee
-        validateToken(_depositData.token)
-        validateBridge(_depositData.targetBridge)
         validateAmount(_depositData.amount)
     {
+        if (msg.value < fee) {
+            revert InsufficientFee();
+        }
+
         Token(_depositData.token).permit(
             msg.sender,
             address(this),
@@ -97,11 +75,12 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
         payable
         override
         nonReentrant
-        validateFee
-        validateToken(_depositData.token)
-        validateBridge(_depositData.targetBridge)
         validateAmount(_depositData.amount)
     {
+        if (msg.value < fee) {
+            revert InsufficientFee();
+        }
+
         Token(_depositData.token).permit(
             msg.sender,
             address(this),
@@ -127,11 +106,8 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
         WithdrawData calldata _withdrawData
     )
         external
-        payable
         override
         nonReentrant
-        validateFee
-        validateToken(_withdrawData.token)
         validateAmount(_withdrawData.amount)
     {
         Token(_withdrawData.token).transfer(msg.sender, _withdrawData.amount);
@@ -143,34 +119,21 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
         WithdrawData calldata _withdrawData
     )
         external
-        payable
         override
         nonReentrant
-        validateFee
-        validateToken(_withdrawData.token)
         validateAmount(_withdrawData.amount)
     {
-        Token(_withdrawData.token).mint(msg.sender, _withdrawData.amount);
+        address wrappedTokenAddress = tokenToWrappedToken[_withdrawData.token];
 
-        emit Minted(msg.sender, _withdrawData.token, _withdrawData.amount);
-    }
+        if (wrappedTokenAddress == address(0)) {
+            Token wrappedToken = new Token(_withdrawData.name, _withdrawData.symbol, address(this));
+            wrappedTokenAddress = address(wrappedToken);
+            tokenToWrappedToken[_withdrawData.token] = wrappedTokenAddress;
+        }
 
-    function addBridge(address _bridge) external onlyOwner {
-        bridges[_bridge] = true;
-    }
+        Token(wrappedTokenAddress).mint(msg.sender, _withdrawData.amount);
 
-    function addToken(address _token) external onlyOwner {
-        supportedTokens[_token] = true;
-    }
-
-    function createWrappedToken(
-        address token,
-        string calldata name,
-        string calldata symbol
-    ) external onlyOwner {
-        Token wrappedToken = new Token(name, symbol, address(this));
-        tokenToWrappedToken[token] = address(wrappedToken);
-        supportedTokens[address(wrappedToken)] = true;
+        emit Minted(msg.sender, wrappedTokenAddress, _withdrawData.amount);
     }
 
     function updateOwner(address _owner) external onlyOwner {
