@@ -8,7 +8,8 @@ import TransferList from "./TransferList";
 const Claim = () => {
   const { chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
-  const bridgeAddress = chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
+  const bridgeAddress =
+    chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
 
   const [provider, setProvider] = useState({});
   const [tranfers, setTransfers] = useState([]);
@@ -55,33 +56,59 @@ const Claim = () => {
     }
   }, []);
 
-  async function withdrawFromBridgeCall(e) {
+  async function claimFromBridge(e) {
     e.preventDefault();
-
-    const bridge = new ethers.Contract(
-      bridgeAddress[0],
-      bridgeAbi,
-      provider.getSigner()
-    );
-
     let formData = new FormData(e.target);
 
     //let token = formData.get("token");
-    let token = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+    let token = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
     let amount = formData.get("amount");
 
-    // let tx = await bridge.functions.mint(token, "WSHARK", "WSHARK", ethers.utils.parseUnits(amount, 18), {
-    //   gasLimit: 30000000,
-    // });
-    // await tx.wait(1);
-    // console.log(tx);
+    if (chainId == 31337) {
+      const bridge = new ethers.Contract(
+        bridgeAddress[1],
+        bridgeAbi,
+        provider.getSigner()
+      );
 
-    let tx = await bridge.functions.unlock(token, ethers.utils.parseUnits(amount, 18), {
-      value: 100000000000,
-      gasLimit: 30000000,
-    });
-    await tx.wait(1);
-    console.log(tx);
+      const tokenContract = new ethers.Contract(
+        token,
+        tokenAbi,
+        provider.getSigner()
+      );
+
+      const tokenName = "W" + (await tokenContract.name()).toString();
+      const tokenSymbol = "W" + (await tokenContract.symbol()).toString();
+
+      let tx = await bridge.functions.mint(
+        token,
+        tokenName,
+        tokenSymbol,
+        ethers.utils.parseUnits(amount, 18),
+        {
+          gasLimit: 30000000,
+        }
+      );
+      await tx.wait(1);
+      console.log(tx);
+    } else {
+      const bridge = new ethers.Contract(
+        bridgeAddress[0],
+        bridgeAbi,
+        provider.getSigner()
+      );
+
+      let tx = await bridge.functions.unlock(
+        token,
+        ethers.utils.parseUnits(amount, 18),
+        {
+          value: 100000000000,
+          gasLimit: 30000000,
+        }
+      );
+      await tx.wait(1);
+      console.log(tx);
+    }
   }
 
   async function generateTransfers() {
@@ -89,14 +116,18 @@ const Claim = () => {
       .then((res) => res.json())
       .then((data) =>
         setTransfers(
-          data.filter((x) => x.to.toLowerCase() == ethereum.selectedAddress && x.isClaimed == false)
+          data.filter(
+            (x) =>
+              x.to.toLowerCase() == ethereum.selectedAddress &&
+              x.isClaimed == false
+          )
         )
       );
   }
 
   return (
     <>
-      <form onSubmit={withdrawFromBridgeCall}>
+      <form onSubmit={claimFromBridge}>
         <div className="inline-block relative w-64 mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
             Token
@@ -109,7 +140,6 @@ const Claim = () => {
             <option value="0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0">
               SHARK
             </option>
-            <option value="0xCafac3dD18aC6c6e92c921884f9E4176737C052c">WSHARK</option>
           </select>
         </div>
         <div className="mb-6">

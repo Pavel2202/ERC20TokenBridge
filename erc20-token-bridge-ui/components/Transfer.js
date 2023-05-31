@@ -7,7 +7,8 @@ import { tokenAddresses, tokenAbi } from "@/constants/Token";
 const Transfer = () => {
   const { chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
-  const bridgeAddress = chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
+  const bridgeAddress =
+    chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
 
   const [provider, setProvider] = useState({});
 
@@ -76,55 +77,100 @@ const Transfer = () => {
     };
   }
 
-  async function depositToBridgeCall(e) {
+  async function depositToBridge(e) {
     e.preventDefault();
+    const account = ethereum.selectedAddress;
     let formData = new FormData(e.target);
 
     let to = formData.get("to");
     let token = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
     let amount = formData.get("amount");
 
-    const bridge = new ethers.Contract(
-      bridgeAddress[1],
-      bridgeAbi,
-      provider.getSigner()
-    );
-    
-    //if on target bridge
-    const wtoken = await bridge.tokenToWrappedToken(token);
-    console.log(wtoken);
-    //
+    if (chainId == 31337) {
+      const bridge = new ethers.Contract(
+        bridgeAddress[0],
+        bridgeAbi,
+        provider.getSigner()
+      );
 
-    const tokenContract = new ethers.Contract(
-      wtoken,
-      tokenAbi,
-      provider.getSigner()
-    );
+      const tokenContract = new ethers.Contract(
+        token,
+        tokenAbi,
+        provider.getSigner()
+      );
 
-    const { v, r, s, deadline } = await onPermit(
-      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      bridge.address,
-      provider,
-      ethers.utils.parseUnits(amount, 18),
-      tokenContract
-    );
+      const { v, r, s, deadline } = await onPermit(
+        account,
+        bridge.address,
+        provider,
+        ethers.utils.parseUnits(amount, 18),
+        tokenContract
+      );
 
-    let signatureData = {
-      deadline: deadline,
-      v: v,
-      r: r,
-      s: s,
-    };
+      let signatureData = {
+        deadline: deadline,
+        v: v,
+        r: r,
+        s: s,
+      };
 
-    await bridge.functions.burn(to, token, ethers.utils.parseUnits(amount, 18), signatureData, {
-      //value: 100000000000,
-      gasLimit: 30000000,
-    });
+      await bridge.functions.lock(
+        to,
+        token,
+        ethers.utils.parseUnits(amount, 18),
+        signatureData,
+        {
+          value: 100000000000,
+          gasLimit: 30000000,
+        }
+      );
+    } else {
+      const bridge = new ethers.Contract(
+        bridgeAddress[1],
+        bridgeAbi,
+        provider.getSigner()
+      );
+
+      const wtoken = await bridge.tokenToWrappedToken(token);
+      console.log(wtoken);
+
+      const tokenContract = new ethers.Contract(
+        wtoken,
+        tokenAbi,
+        provider.getSigner()
+      );
+
+      const { v, r, s, deadline } = await onPermit(
+        account,
+        bridge.address,
+        provider,
+        ethers.utils.parseUnits(amount, 18),
+        tokenContract
+      );
+
+      let signatureData = {
+        deadline: deadline,
+        v: v,
+        r: r,
+        s: s,
+      };
+
+      await bridge.functions.burn(
+        to,
+        token,
+        ethers.utils.parseUnits(amount, 18),
+        signatureData,
+        {
+          gasLimit: 30000000,
+        }
+      );
+    }
   }
 
-  async function ready(e) {
+  async function startMint(e) {
     e.preventDefault();
-    const tokenAddress = chainId in tokenAddresses ? tokenAddresses[chainId] : null;
+    const tokenAddress =
+      chainId in tokenAddresses ? tokenAddresses[chainId] : null;
 
     const token = new ethers.Contract(
       tokenAddress,
@@ -132,12 +178,15 @@ const Transfer = () => {
       provider.getSigner()
     );
 
-    await token.functions.mint("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", ethers.utils.parseUnits("100", 18));
+    await token.functions.mint(
+      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      ethers.utils.parseUnits("100", 18)
+    );
   }
 
   return (
     <>
-      <form onSubmit={depositToBridgeCall}>
+      <form onSubmit={depositToBridge}>
         <div className="mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
             To
@@ -178,7 +227,7 @@ const Transfer = () => {
         </button>
       </form>
 
-      <button onClick={ready}>Setup</button>
+      <button onClick={startMint}>Setup</button>
     </>
   );
 };
