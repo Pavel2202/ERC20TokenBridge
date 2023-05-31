@@ -33,6 +33,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     });
 
     console.log("Token deployed " + token.address);
+
+    const attackerToken = await deploy("AttackerToken", {
+      from: deployer,
+      args: ["TokenAttack", "ATTACK", deployer],
+      log: true,
+      waitConfirmations: network.config.blockConfirmations || 1,
+    });
+
+    console.log("Attacker Token deployed " + token.address);
   }
 };
 
