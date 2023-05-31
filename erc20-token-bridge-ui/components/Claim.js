@@ -1,10 +1,15 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
+import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAddresses, tokenAbi } from "@/constants/Token";
 import TransferList from "./TransferList";
 
 const Claim = () => {
+  const { chainId: chainIdHex } = useMoralis();
+  const chainId = parseInt(chainIdHex);
+  const bridgeAddress = chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
+
   const [provider, setProvider] = useState({});
   const [tranfers, setTransfers] = useState([]);
 
@@ -52,29 +57,27 @@ const Claim = () => {
 
   async function withdrawFromBridgeCall(e) {
     e.preventDefault();
-    const chainId = await (await provider.getNetwork()).chainId;
 
     const bridge = new ethers.Contract(
-      bridgeAddresses[chainId][1],
+      bridgeAddress[0],
       bridgeAbi,
       provider.getSigner()
     );
 
-    console.log(bridge);
-
     let formData = new FormData(e.target);
 
-    let token = formData.get("token");
+    //let token = formData.get("token");
+    let token = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
     let amount = formData.get("amount");
 
-    let withdrawData = {
-      token: token,
-      amount: ethers.utils.parseUnits(amount, 18),
-    };
+    // let tx = await bridge.functions.mint(token, "WSHARK", "WSHARK", ethers.utils.parseUnits(amount, 18), {
+    //   gasLimit: 30000000,
+    // });
+    // await tx.wait(1);
+    // console.log(tx);
 
-    console.log(withdrawData);
-
-    let tx = await bridge.functions.withdraw(withdrawData, {
+    let tx = await bridge.functions.unlock(token, ethers.utils.parseUnits(amount, 18), {
+      value: 100000000000,
       gasLimit: 30000000,
     });
     await tx.wait(1);

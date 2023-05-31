@@ -1,10 +1,13 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
+import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAddresses, tokenAbi } from "@/constants/Token";
 
 const Transfer = () => {
-  let account;
+  const { chainId: chainIdHex } = useMoralis();
+  const chainId = parseInt(chainIdHex);
+  const bridgeAddress = chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
 
   const [provider, setProvider] = useState({});
 
@@ -13,15 +16,6 @@ const Transfer = () => {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
     }
   }, []);
-
-  let chainId, bridgeAddress, tokenAddress;
-
-  async function setup() {
-    chainId = await (await provider.getNetwork()).chainId;
-    account = ethereum.selectedAddress;
-    bridgeAddress = bridgeAddresses[chainId][0];
-    tokenAddress = tokenAddresses[chainId][0];
-  }
 
   async function onPermit(owner, spender, provider, amount, tokenContract) {
     const nonce = await tokenContract.nonces(owner);
@@ -84,89 +78,53 @@ const Transfer = () => {
 
   async function depositToBridgeCall(e) {
     e.preventDefault();
-    await setup();
-
     let formData = new FormData(e.target);
 
     let to = formData.get("to");
-    let targetBridgeIndex = formData.get("bridge");
-    let targetBridge = bridgeAddresses[chainId][targetBridgeIndex];
-    let tokenIndex = formData.get("token");
-    let token = tokenAddresses[chainId][tokenIndex];
+    let token = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
     let amount = formData.get("amount");
 
     const bridge = new ethers.Contract(
-      bridgeAddresses[chainId][0],
+      bridgeAddress[1],
       bridgeAbi,
       provider.getSigner()
     );
+    
+    //if on target bridge
+    const wtoken = await bridge.tokenToWrappedToken(token);
+    console.log(wtoken);
+    //
 
     const tokenContract = new ethers.Contract(
-      token,
+      wtoken,
       tokenAbi,
       provider.getSigner()
     );
 
     const { v, r, s, deadline } = await onPermit(
-      account,
+      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       bridge.address,
       provider,
       ethers.utils.parseUnits(amount, 18),
       tokenContract
     );
 
-    let depositData = {
-      to: to,
-      token: token,
-      targetBridge: targetBridge,
-      amount: ethers.utils.parseUnits(amount, 18),
-      deadline: deadline,
-    };
-
-    console.log(depositData);
-
     let signatureData = {
+      deadline: deadline,
       v: v,
       r: r,
       s: s,
     };
 
-    await bridge.functions.deposit(depositData, signatureData, {
+    await bridge.functions.burn(to, token, ethers.utils.parseUnits(amount, 18), signatureData, {
+      //value: 100000000000,
       gasLimit: 30000000,
     });
   }
 
   async function ready(e) {
     e.preventDefault();
-    await setup();
-
-    const bridge = new ethers.Contract(
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      bridgeAbi,
-      provider.getSigner()
-    );
-
-    await bridge.functions.addBridge(
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-    );
-
-    let recepientBridge = new ethers.Contract(
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      bridgeAbi,
-      provider.getSigner()
-    );
-
-    await recepientBridge.functions.addBridge(
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    );
-    await bridge.functions.addToken(tokenAddress);
-    await recepientBridge.functions.addToken(tokenAddress);
-
-    await recepientBridge.functions.createWrappedToken(
-      tokenAddress,
-      "WSHARK",
-      "WSHARK"
-    );  
+    const tokenAddress = chainId in tokenAddresses ? tokenAddresses[chainId] : null;
 
     const token = new ethers.Contract(
       tokenAddress,
@@ -174,7 +132,7 @@ const Transfer = () => {
       provider.getSigner()
     );
 
-    await token.functions.mint(account, ethers.utils.parseUnits("100", 18));
+    await token.functions.mint("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", ethers.utils.parseUnits("100", 18));
   }
 
   return (
@@ -190,19 +148,6 @@ const Transfer = () => {
             name="to"
             className="w-1/4 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           ></input>
-        </div>
-        <div className="inline-block relative w-64 mb-6">
-          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
-            Bridge
-          </label>
-          <select
-            name="bridge"
-            id="bridge"
-            className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
-          >
-            <option value="0">Ethereum</option>
-            <option value="1">Polygon</option>
-          </select>
         </div>
         <div className="inline-block relative w-64 mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
