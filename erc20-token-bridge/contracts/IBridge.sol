@@ -3,32 +3,17 @@
 pragma solidity ^0.8.19;
 
 interface IBridge {
-    struct DepositData {
-        address to;
-        address token;
-        address targetBridge;
-        uint256 amount;
-        uint256 deadline;
-    }
-
     struct Signature {
+        uint256 deadline;
         uint8 v;
         bytes32 r;
         bytes32 s;
-    }
-
-    struct WithdrawData {
-        address token;
-        string name;
-        string symbol;
-        uint256 amount;
     }
 
     event Locked(
         address indexed sender,
         address receiver,
         address indexed token,
-        address indexed targetBridge,
         uint256 amount
     );
 
@@ -36,7 +21,6 @@ interface IBridge {
         address indexed sender,
         address receiver,
         address indexed token,
-        address indexed targetBridge,
         uint256 amount
     );
 
@@ -53,18 +37,22 @@ interface IBridge {
     );
 
     function lock(
-        DepositData calldata _depositData,
+        address to,
+        address token,
+        uint256 amount,
         Signature calldata _signature
     ) external payable;
 
     function burn(
-        DepositData calldata _depositData,
+        address to,
+        address token,
+        uint256 amount,
         Signature calldata _signature
-    ) external payable;
+    ) external;
 
-    function unlock(WithdrawData calldata _withdrawData) external;
+    function unlock(address token, uint256 amount) external payable;
 
-    function mint(WithdrawData calldata _withdrawData) external;
+    function mint(address token, string calldata name, string calldata symbol, uint256 amount) external;
 
     function updateOwner(address _owner) external;
 
