@@ -13,14 +13,11 @@ module.exports = async () => {
     );
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-    const tokenFactory = new ethers.ContractFactory(abi, bytecode, wallet);
-    const token = await tokenFactory.deploy(
-      "TokenShark",
-      "SHARK",
-      "0xf739403058D49D2B5c37DB58e788D32181aD0033"
-    );
+    const Token = await ethers.getContractFactory("Token", wallet);
+    const token = await Token.deploy("TokenShark", "SHARK", "0xf739403058D49D2B5c37DB58e788D32181aD0033");
+    await token.deployed();
 
-    console.log("Token deployed " + token.address);
+    console.log("Token deployed on Sepolia: " + token.address);
   }
 };
 

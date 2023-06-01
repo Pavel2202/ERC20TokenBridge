@@ -1,4 +1,4 @@
-const { network, ethers } = require("hardhat");
+const { network } = require("hardhat");
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const chainId = network.config.chainId;
@@ -41,7 +41,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       waitConfirmations: network.config.blockConfirmations || 1,
     });
 
-    console.log("Attacker Token deployed " + token.address);
+    console.log("Attacker Token deployed " + attackerToken.address);
   }
 };
 

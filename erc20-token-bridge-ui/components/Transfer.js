@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 import { useState, useEffect } from "react";
 import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
@@ -83,12 +83,13 @@ const Transfer = () => {
     let formData = new FormData(e.target);
 
     let to = formData.get("to");
-    let token = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+    let tokenIndex = formData.get("token");
+    let token = tokenAddresses[tokenIndex];
     let amount = formData.get("amount");
 
-    if (chainId == 31337) {
+    if (chainId == 11155111) {
       const bridge = new ethers.Contract(
-        bridgeAddress[0],
+        bridgeAddress,
         bridgeAbi,
         provider.getSigner()
       );
@@ -113,6 +114,7 @@ const Transfer = () => {
         r: r,
         s: s,
       };
+      const feeData = await provider.getFeeData();
 
       await bridge.functions.lock(
         to,
@@ -120,13 +122,15 @@ const Transfer = () => {
         ethers.utils.parseUnits(amount, 18),
         signatureData,
         {
-          value: 100000000000,
+          value: ethers.utils.parseEther("0.0000001"),
           gasLimit: 30000000,
+          maxFeePerGas: BigNumber.from(feeData.maxFeePerGas),
+          maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
         }
       );
     } else {
       const bridge = new ethers.Contract(
-        bridgeAddress[1],
+        bridgeAddress,
         bridgeAbi,
         provider.getSigner()
       );
@@ -159,29 +163,9 @@ const Transfer = () => {
         to,
         token,
         ethers.utils.parseUnits(amount, 18),
-        signatureData,
-        {
-          gasLimit: 30000000,
-        }
+        signatureData
       );
     }
-  }
-
-  async function startMint(e) {
-    e.preventDefault();
-    const tokenAddress =
-      chainId in tokenAddresses ? tokenAddresses[chainId] : null;
-
-    const token = new ethers.Contract(
-      tokenAddress,
-      tokenAbi,
-      provider.getSigner()
-    );
-
-    await token.functions.mint(
-      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      ethers.utils.parseUnits("100", 18)
-    );
   }
 
   return (
@@ -208,7 +192,6 @@ const Transfer = () => {
             className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
           >
             <option value="0">SHARK</option>
-            <option value="1">WSHARK</option>
           </select>
         </div>
         <div className="mb-6">
@@ -226,8 +209,6 @@ const Transfer = () => {
           SEND
         </button>
       </form>
-
-      <button onClick={startMint}>Setup</button>
     </>
   );
 };
