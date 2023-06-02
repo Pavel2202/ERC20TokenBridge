@@ -1,9 +1,15 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
+import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAddresses } from "@/constants/Token";
 
 const TransferCard = ({ transfer }) => {
+  const { chainId: chainIdHex } = useMoralis();
+  const chainId = parseInt(chainIdHex);
+  const bridgeAddress =
+    chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
+
   const [provider, setProvider] = useState({});
 
   useEffect(() => {
@@ -12,12 +18,11 @@ const TransferCard = ({ transfer }) => {
     }
   }, []);
 
-  async function withdrawFromBridgeCall(e) {
+  async function withdrawFromBridge(e) {
     e.preventDefault();
-    const chainId = await (await provider.getNetwork()).chainId;
 
     const bridge = new ethers.Contract(
-      bridgeAddresses[chainId][1],
+      bridgeAddress,
       bridgeAbi,
       provider.getSigner()
     );
@@ -28,7 +33,10 @@ const TransferCard = ({ transfer }) => {
       .split("...");
     let amount = spanElement.children[3].textContent.split(" ")[1];
 
-    let allTokens = tokenAddresses[chainId];
+    let allTokens = [];
+    for (let key in tokenAddresses) {
+      allTokens.push(tokenAddresses[key]);
+    }
 
     let token;
     allTokens.forEach((x) => {
@@ -38,18 +46,39 @@ const TransferCard = ({ transfer }) => {
     });
     amount = amount + "000000000000000000";
 
-    let withdrawData = {
-      token: token,
-      amount: amount,
-    };
+    if (chainId == 80001) {
+      const bridge = new ethers.Contract(
+        bridgeAddress,
+        bridgeAbi,
+        provider.getSigner()
+      );
 
-    console.log(withdrawData);
+      let tx = await bridge.functions.mint(
+        token,
+        "WTokenShark",
+        "WSHARK",
+        amount
+      );
+      await tx.wait(1);
+      console.log(tx);
+    } else {
+      const bridge = new ethers.Contract(
+        bridgeAddress,
+        bridgeAbi,
+        provider.getSigner()
+      );
 
-    let tx = await bridge.functions.withdraw(withdrawData, {
-      gasLimit: 30000000,
-    });
-    await tx.wait(1);
-    console.log(tx);
+      let tx = await bridge.functions.unlock(
+        token,
+        amount,
+        {
+          value: 100000000000,
+          gasLimit: 30000000,
+        }
+      );
+      await tx.wait(1);
+      console.log(tx);
+    }
 
     let response = await fetch(
       `http://localhost:3001/transfers/${transfer._id}`,
@@ -85,7 +114,7 @@ const TransferCard = ({ transfer }) => {
       </span>
       <button
         className="shadow bg-lime-500 hover:bg-lime-400 focus:shadow-outline focus:outline-none text-white font-bold rounded"
-        onClick={withdrawFromBridgeCall}
+        onClick={withdrawFromBridge}
       >
         Claim
       </button>

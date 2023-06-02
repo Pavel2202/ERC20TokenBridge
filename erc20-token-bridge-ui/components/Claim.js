@@ -53,6 +53,9 @@ const Claim = () => {
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
+      fetch("http://localhost:3001/transfers")
+        .then((res) => res.json())
+        .then((data) => setTransfers(data));
     }
   }, []);
 
@@ -99,20 +102,6 @@ const Claim = () => {
     }
   }
 
-  async function generateTransfers() {
-    await fetch("http://localhost:3001/transfers")
-      .then((res) => res.json())
-      .then((data) =>
-        setTransfers(
-          data.filter(
-            (x) =>
-              x.to.toLowerCase() == ethereum.selectedAddress &&
-              x.isClaimed == false
-          )
-        )
-      );
-  }
-
   return (
     <>
       <form onSubmit={claimFromBridge}>
@@ -151,10 +140,6 @@ const Claim = () => {
         <button onClick={() => changeNetwork("sepolia")}>
           Change to Sepolia
         </button>
-      </div>
-
-      <div>
-        <button onClick={generateTransfers}>Get All</button>
       </div>
 
       <div>

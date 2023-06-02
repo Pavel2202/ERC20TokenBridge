@@ -1,64 +1,57 @@
+require("dotenv").config();
 const { bridgeAddresses, bridgeAbi } = require("../constants/Bridge");
 const { ethers } = require("ethers");
 const Transfer = require("../models/Transfer");
 
 const ethProvider = new ethers.providers.JsonRpcProvider(
-  "http://127.0.0.1:8545/"
+  process.env.SEPOLIA_RPC_URL
 );
 const polygonProvider = new ethers.providers.JsonRpcProvider(
-  "http://127.0.0.1:8545/"
+  process.env.MUMBAI_RPC_URL
 );
 
 const ethBridge = new ethers.Contract(
-  bridgeAddresses[31337][0],
+  bridgeAddresses[11155111],
   bridgeAbi,
   ethProvider
 );
 
 const polygonBridge = new ethers.Contract(
-  bridgeAddresses[31337][1],
+  bridgeAddresses[80001],
   bridgeAbi,
   polygonProvider
 );
 
 const listener = async () => {
-  await ethBridge.on(
-    "Deposit",
-    async (from, to, token, targetBridge, amount, blockNumber) => {
-      console.log(blockNumber);
+  await ethBridge.on("Locked", async (from, to, token, amount) => {
+    console.log("locked");
 
-      const data = {
-        from: from,
-        to: to,
-        token: token,
-        targetBridge: targetBridge,
-        amount: amount,
-        isClaimed: false,
-      };
+    const data = {
+      from: from,
+      to: to,
+      token: token,
+      amount: amount,
+      isClaimed: false,
+    };
 
-      const transfer = new Transfer(data);
-      await transfer.save();
-    }
-  );
+    const transfer = new Transfer(data);
+    await transfer.save();
+  });
 
-  await polygonBridge.on(
-    "Deposit",
-    async (from, to, token, targetBridge, amount, blockNumber) => {
-      console.log(blockNumber);
+  await polygonBridge.on("Burned", async (from, to, token, amount) => {
+    console.log("burned");
 
-      const data = {
-        from: from,
-        to: to,
-        token: token,
-        targetBridge: targetBridge,
-        amount: amount,
-        isClaimed: false,
-      };
+    const data = {
+      from: from,
+      to: to,
+      token: token,
+      amount: amount,
+      isClaimed: false,
+    };
 
-      const transfer = new Transfer(data);
-      await transfer.save();
-    }
-  );
+    const transfer = new Transfer(data);
+    await transfer.save();
+  });
 };
 
 module.exports = listener;
