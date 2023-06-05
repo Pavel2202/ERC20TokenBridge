@@ -46,8 +46,8 @@ const Transfer = () => {
   }
 
   async function populateTokenSelect() {
-    console.log("here");
     let selectElement = document.getElementById("token");
+    selectElement.innerHTML = "";
 
     for (let index = 0; index < tokens.length; index++) {
       const currentToken = tokens[index];
