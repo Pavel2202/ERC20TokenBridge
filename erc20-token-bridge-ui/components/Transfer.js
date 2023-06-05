@@ -1,5 +1,7 @@
 import { ethers, BigNumber } from "ethers";
 import { useState, useEffect } from "react";
+import Moralis from "moralis";
+import { EvmChain } from "@moralisweb3/common-evm-utils";
 import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAddresses, tokenAbi } from "@/constants/Token";
@@ -11,12 +13,49 @@ const Transfer = () => {
     chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
 
   const [provider, setProvider] = useState({});
+  const [tokens, setTokens] = useState({});
 
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
+      startMoralis();
+      getTokens();
     }
   }, []);
+
+  useEffect(() => {
+    populateTokenSelect();
+  }, [tokens]);
+
+  async function startMoralis() {
+    if (!Moralis.Core.isStarted) {
+      await Moralis.start({
+        apiKey: process.env.MORALIS_API_KEY,
+      });
+    }
+  }
+
+  async function getTokens() {
+    const address = ethereum.selectedAddress;
+    const chain = EvmChain.SEPOLIA;
+    const userTokens = await Moralis.EvmApi.token.getWalletTokenBalances({
+      address,
+      chain,
+    });
+    setTokens(userTokens.toJSON());
+  }
+
+  async function populateTokenSelect() {
+    console.log("here");
+    let selectElement = document.getElementById("token");
+
+    for (let index = 0; index < tokens.length; index++) {
+      const currentToken = tokens[index];
+      selectElement.innerHTML =
+        selectElement.innerHTML +
+        `<option value="${currentToken.token_address}">${currentToken.name}</option>`;
+    }
+  }
 
   async function onPermit(owner, spender, provider, amount, tokenContract) {
     const nonce = await tokenContract.nonces(owner);
@@ -83,9 +122,10 @@ const Transfer = () => {
     let formData = new FormData(e.target);
 
     let to = formData.get("to");
-    let tokenIndex = formData.get("token");
-    let token = tokenAddresses[tokenIndex];
+    let token = formData.get("token");
     let amount = formData.get("amount");
+
+    console.log(token);
 
     if (chainId == 11155111) {
       const bridge = new ethers.Contract(
@@ -190,9 +230,7 @@ const Transfer = () => {
             name="token"
             id="token"
             className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
-          >
-            <option value="0">SHARK</option>
-          </select>
+          ></select>
         </div>
         <div className="mb-6">
           <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
