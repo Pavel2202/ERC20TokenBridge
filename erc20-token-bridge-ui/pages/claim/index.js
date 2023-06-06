@@ -1,8 +1,8 @@
 import Head from "next/head";
 
-import Header from "@/components/Header";
-import Claim from "@/components/Claim";
-import Footer from "@/components/Footer";
+import Header from "@/components/Header/Header";
+import Claim from "@/components/Claim/Claim";
+import Footer from "@/components/Footer/Footer";
 
 export default function Home() {
   return (

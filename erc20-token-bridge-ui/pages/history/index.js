@@ -1,7 +1,7 @@
 import Head from "next/head";
 
 import Header from "@/components/Header/Header";
-import HomePage from "@/components/Home/Home";
+import History from "@/components/History/History";
 import Footer from "@/components/Footer/Footer";
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
       </Head>
       <Header />
       <main>
-        <HomePage />
+        <History />
       </main>
       <Footer />
     </>

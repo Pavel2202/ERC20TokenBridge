@@ -1,6 +1,3 @@
-import { ethers } from "ethers";
-import { useState, useEffect } from "react";
-import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import TransferCard from "./TransferCard";
 
 const TransferList = ({ transfers }) => {

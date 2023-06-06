@@ -4,7 +4,7 @@ import Moralis from "moralis";
 import { EvmChain } from "@moralisweb3/common-evm-utils";
 import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
-import { tokenAddresses, tokenAbi } from "@/constants/Token";
+import { tokenAbi } from "@/constants/Token";
 
 const Transfer = () => {
   const { chainId: chainIdHex } = useMoralis();
