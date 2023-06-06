@@ -22,7 +22,7 @@ Give users to ability to trade tokens between two networks.
 
 ### User stories
 
-![UserStories](https://i.imgur.com/YfAW1Ew.png)
+![UserStories](https://i.imgur.com/IUN7AY5.png)
 
 ### Bridge contract
 
@@ -34,7 +34,7 @@ Give users to ability to trade tokens between two networks.
 
 #### Events
 
-![Events](https://i.imgur.com/MKQVIC8.png)
+![Events](https://i.imgur.com/gNTMSYM.png)
 
 ### Token contract
 
