@@ -119,21 +119,19 @@ const Transfer = () => {
   async function depositToBridge(e) {
     e.preventDefault();
     const account = ethereum.selectedAddress;
+    const bridge = new ethers.Contract(
+      bridgeAddress,
+      bridgeAbi,
+      provider.getSigner()
+    );
+
     let formData = new FormData(e.target);
 
     let to = formData.get("to");
     let token = formData.get("token");
     let amount = formData.get("amount");
 
-    console.log(token);
-
     if (chainId == 11155111) {
-      const bridge = new ethers.Contract(
-        bridgeAddress,
-        bridgeAbi,
-        provider.getSigner()
-      );
-
       const tokenContract = new ethers.Contract(
         token,
         tokenAbi,
@@ -169,12 +167,6 @@ const Transfer = () => {
         }
       );
     } else {
-      const bridge = new ethers.Contract(
-        bridgeAddress,
-        bridgeAbi,
-        provider.getSigner()
-      );
-
       const wtoken = await bridge.tokenToWrappedToken(token);
       console.log(wtoken);
 

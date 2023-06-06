@@ -1,8 +1,9 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
+import Moralis from "moralis";
+import { EvmChain } from "@moralisweb3/common-evm-utils";
 import { useMoralis } from "react-moralis";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
-import { tokenAddresses } from "@/constants/Token";
 
 const TransferCard = ({ transfer }) => {
   const { chainId: chainIdHex } = useMoralis();
@@ -11,12 +12,33 @@ const TransferCard = ({ transfer }) => {
     chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
 
   const [provider, setProvider] = useState({});
+  const [tokens, setTokens] = useState({});
 
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
+      startMoralis();
+      getTokens();
     }
   }, []);
+
+  async function startMoralis() {
+    if (!Moralis.Core.isStarted) {
+      await Moralis.start({
+        apiKey: process.env.MORALIS_API_KEY,
+      });
+    }
+  }
+
+  async function getTokens() {
+    const address = ethereum.selectedAddress;
+    const chain = EvmChain.SEPOLIA;
+    const userTokens = await Moralis.EvmApi.token.getWalletTokenBalances({
+      address,
+      chain,
+    });
+    setTokens(userTokens.toJSON());
+  }
 
   async function withdrawFromBridge(e) {
     e.preventDefault();
@@ -33,49 +55,43 @@ const TransferCard = ({ transfer }) => {
       .split("...");
     let amount = spanElement.children[3].textContent.split(" ")[1];
 
-    let allTokens = [];
-    for (let key in tokenAddresses) {
-      allTokens.push(tokenAddresses[key]);
+    let token;
+    for (let key in tokens) {
+      if (
+        tokens[key].token_address
+          .toLowerCase()
+          .includes(tokenData[0].toLowerCase()) &&
+        tokens[key].token_address
+          .toLowerCase()
+          .includes(tokenData[1].toLowerCase())
+      ) {
+        token = tokens[key];
+        break;
+      }
     }
 
-    let token;
-    allTokens.forEach((x) => {
-      if (x.includes(tokenData[0]) && x.includes(tokenData[1])) {
-        token = x;
-      }
-    });
-    amount = amount + "000000000000000000";
+    amount = ethers.utils.parseUnits(amount, 18);
+    console.log(amount);
 
     if (chainId == 80001) {
-      const bridge = new ethers.Contract(
-        bridgeAddress,
-        bridgeAbi,
-        provider.getSigner()
+      let wtoken = await bridge.functions.tokenToWrappedToken(
+        token.token_address
       );
+      console.log(wtoken);
 
       let tx = await bridge.functions.mint(
-        token,
-        "WTokenShark",
-        "WSHARK",
+        token.token_address,
+        "W" + token.name,
+        "W" + token.symbol,
         amount
       );
       await tx.wait(1);
       console.log(tx);
     } else {
-      const bridge = new ethers.Contract(
-        bridgeAddress,
-        bridgeAbi,
-        provider.getSigner()
-      );
-
-      let tx = await bridge.functions.unlock(
-        token,
-        amount,
-        {
-          value: 100000000000,
-          gasLimit: 30000000,
-        }
-      );
+      let tx = await bridge.functions.unlock(token, amount, {
+        value: 100000000000,
+        gasLimit: 30000000,
+      });
       await tx.wait(1);
       console.log(tx);
     }
@@ -91,6 +107,7 @@ const TransferCard = ({ transfer }) => {
       }
     );
 
+    console.log(response);
     let result = await response.json();
     console.log(result);
   }

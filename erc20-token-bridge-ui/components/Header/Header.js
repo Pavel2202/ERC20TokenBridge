@@ -1,28 +1,103 @@
 import Link from "next/link";
+import { useMoralis } from "react-moralis";
 import { ConnectButton } from "web3uikit";
 
 const Header = () => {
+  const { chainId: chainIdHex } = useMoralis();
+  const chainId = parseInt(chainIdHex);
+
+  const networks = {
+    mumbai: {
+      chainId: `0x${Number(80001).toString(16)}`,
+      chainName: "Mumbai Testnet",
+      nativeCurrency: {
+        name: "MATIC",
+        symbol: "MATIC",
+        decimals: 18,
+      },
+      rpcUrls: ["https://rpc-mumbai.maticvigil.com/"],
+      blockExplorerUrls: ["https://polygonscan.com/"],
+    },
+    sepolia: {
+      chainId: `0x${Number(11155111).toString(16)}`,
+      chainName: "Sepolia",
+      nativeCurrency: {
+        name: "SEP",
+        symbol: "SEP",
+        decimals: 18,
+      },
+      rpcUrls: ["https://rpc.sepolia.org"],
+      blockExplorerUrls: ["https://sepolia.etherscan.io"],
+    },
+  };
+
+  const changeNetwork = async (networkName) => {
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          ...networks[networkName],
+        },
+      ],
+    });
+  };
+
+  async function changeNetworkHandler(e) {
+    e.preventDefault();
+    changeNetwork(e.target.textContent.toLowerCase());
+  }
+
   return (
-    <header className="navbar">
-      <div className="p5 border-b-2 flex flex-row">
-        <div>
+    <header className="border-b md:flex md:items-center md:justify-between p-4 pb-0 shadow-lg md:pb-4">
+      <div className="flex items-center justify-between mb-4 md:mb-0">
+        <h1 className="leading-none text-2xl text-grey-darkest">
           <Link href="/" className="py-4 px-4 font-bold text-3xl">
             ERC20 Token Bridge
           </Link>
-        </div>
-        <div className="ml-auto py-2 px-4">
-          <Link href="/transfer" className="inline py-2 px-4 text-black-400">
-            Transfer
-          </Link>
-          <Link href="/claim" className="inline py-2 px-4 text-black-400">
-            Claim
-          </Link>
-          <Link href="/history" className="inline py-2 px-4 text-black-400">
-            History
-          </Link>
-          <ConnectButton moralisAuth={false} />
-        </div>
+        </h1>
       </div>
+
+      <nav>
+        <ul className="list-reset md:flex md:items-center">
+          <li className="md:ml-4">
+            <Link href="/transfer" className="inline py-2 px-4 text-black-400">
+              Transfer
+            </Link>
+          </li>
+          <li className="md:ml-4">
+            <Link href="/claim" className="inline py-2 px-4 text-black-400">
+              Claim
+            </Link>
+          </li>
+          <li className="md:ml-4">
+            <Link href="/history" className="inline py-2 px-4 text-black-400">
+              History
+            </Link>
+          </li>
+          <li className="md:ml-4">
+            {chainId == 11155111 ? (
+              <button
+                onClick={changeNetworkHandler}
+                id="change-mumbai"
+                className="inline py-2 px-4 text-black-400"
+              >
+                Mumbai
+              </button>
+            ) : (
+              <button
+                onClick={changeNetworkHandler}
+                id="change-sepolia"
+                className="inline py-2 px-4 text-black-400"
+              >
+                Sepolia
+              </button>
+            )}
+          </li>
+          <li className="flex flex-row">
+            <ConnectButton moralisAuth={false} />
+          </li>
+        </ul>
+      </nav>
     </header>
   );
 };
