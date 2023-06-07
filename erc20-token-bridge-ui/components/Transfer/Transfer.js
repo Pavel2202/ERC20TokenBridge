@@ -152,8 +152,8 @@ const Transfer = () => {
         r: r,
         s: s,
       };
+      
       const feeData = await provider.getFeeData();
-
       await bridge.functions.lock(
         to,
         token,
@@ -161,7 +161,6 @@ const Transfer = () => {
         signatureData,
         {
           value: ethers.utils.parseEther("0.0000001"),
-          gasLimit: 30000000,
           maxFeePerGas: BigNumber.from(feeData.maxFeePerGas),
           maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
         }

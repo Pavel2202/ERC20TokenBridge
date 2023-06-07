@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 import { useState, useEffect } from "react";
 import Moralis from "moralis";
 import { EvmChain } from "@moralisweb3/common-evm-utils";
@@ -49,29 +49,16 @@ const TransferCard = ({ transfer }) => {
       provider.getSigner()
     );
 
-    let spanElement = e.target.parentElement.children[0];
-    let tokenData = spanElement.children[2].textContent
-      .split(" ")[1]
-      .split("...");
-    let amount = spanElement.children[3].textContent.split(" ")[1];
-
+    let tokenAddress = transfer.token;
     let token;
+
     for (let key in tokens) {
       if (
-        tokens[key].token_address
-          .toLowerCase()
-          .includes(tokenData[0].toLowerCase()) &&
-        tokens[key].token_address
-          .toLowerCase()
-          .includes(tokenData[1].toLowerCase())
+        tokens[key].token_address.toLowerCase() == tokenAddress.toLowerCase()
       ) {
         token = tokens[key];
-        break;
       }
     }
-
-    amount = ethers.utils.parseUnits(amount, 18);
-    console.log(amount);
 
     if (chainId == 80001) {
       let wtoken = await bridge.functions.tokenToWrappedToken(
@@ -83,15 +70,22 @@ const TransferCard = ({ transfer }) => {
         token.token_address,
         "W" + token.name,
         "W" + token.symbol,
-        amount
+        transfer.amount.toString()
       );
       await tx.wait(1);
       console.log(tx);
     } else {
-      let tx = await bridge.functions.unlock(token, amount, {
-        value: 100000000000,
-        gasLimit: 30000000,
-      });
+      const feeData = await provider.getFeeData();
+      let originalToken = "0x481B005f999fF681BDdEd5F5Bd6D82c3a232E533";
+      let tx = await bridge.functions.unlock(
+        originalToken,
+        transfer.amount.toString(),
+        {
+          value: ethers.utils.parseEther("0.0000001"),
+          maxFeePerGas: BigNumber.from(feeData.maxFeePerGas),
+          maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
+        }
+      );
       await tx.wait(1);
       console.log(tx);
     }
