@@ -76,7 +76,7 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
 
         Token(wrappedToken).burnFrom(msg.sender, amount);
 
-        emit Burned(msg.sender, to, wrappedToken, amount);
+        emit Burned(msg.sender, to, wrappedToken, token, amount);
     }
 
     function unlock(
@@ -121,6 +121,8 @@ contract Bridge is IBridge, Ownable, ReentrancyGuard {
     }
 
     function updateFee(uint256 _fee) external onlyOwner {
+        uint256 oldFee = fee;
         fee = _fee;
+        emit FeeUpdated(oldFee, fee);
     }
 }

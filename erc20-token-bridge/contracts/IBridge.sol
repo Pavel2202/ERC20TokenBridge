@@ -19,8 +19,9 @@ interface IBridge {
 
     event Burned(
         address indexed sender,
-        address receiver,
-        address indexed token,
+        address indexed receiver,
+        address originalToken,
+        address indexed wrappedToken,
         uint256 amount
     );
 
@@ -35,6 +36,8 @@ interface IBridge {
         address indexed token,
         uint256 amount
     );
+
+    event FeeUpdated(uint256 oldFee, uint256 newFee);
 
     function lock(
         address to,
@@ -52,7 +55,12 @@ interface IBridge {
 
     function unlock(address token, uint256 amount) external payable;
 
-    function mint(address token, string calldata name, string calldata symbol, uint256 amount) external;
+    function mint(
+        address token,
+        string calldata name,
+        string calldata symbol,
+        uint256 amount
+    ) external;
 
     function updateOwner(address _owner) external;
 

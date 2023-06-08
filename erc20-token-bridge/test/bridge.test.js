@@ -254,7 +254,7 @@ describe("Bridge", function () {
           .burn(alice, token.address, 100000, signatureData)
       )
         .to.emit(polygonBridge, "Burned")
-        .withArgs(bob, alice, wrappedTokenAddress, 100000);
+        .withArgs(bob, alice, wrappedTokenAddress, token.address, 100000);
 
       const bobTokenBalance = await wrappedToken.balanceOf(bob);
       assert.equal(bobTokenBalance.toString(), "0");
@@ -438,7 +438,7 @@ describe("Bridge", function () {
     });
 
     it("updates the fee", async function () {
-      await ethBridge.connect(deployerSigner).updateFee(5);
+      await expect (ethBridge.connect(deployerSigner).updateFee(5)).to.emit(ethBridge, "FeeUpdated").withArgs(100000000000, 5);
       const fee = await ethBridge.fee();
       assert.equal(fee, 5);
     });

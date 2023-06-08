@@ -1,8 +1,4 @@
 const { network, ethers } = require("hardhat");
-const {
-  abi,
-  bytecode,
-} = require("../artifacts/contracts/Token.sol/Token.json");
 
 module.exports = async () => {
   const chainId = network.config.chainId;

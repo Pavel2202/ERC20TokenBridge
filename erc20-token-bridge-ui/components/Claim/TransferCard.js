@@ -65,7 +65,7 @@ const TransferCard = ({ transfer }) => {
         token.token_address
       );
       console.log(wtoken);
-
+      
       let tx = await bridge.functions.mint(
         token.token_address,
         "W" + token.name,
@@ -76,9 +76,8 @@ const TransferCard = ({ transfer }) => {
       console.log(tx);
     } else {
       const feeData = await provider.getFeeData();
-      let originalToken = "0x481B005f999fF681BDdEd5F5Bd6D82c3a232E533";
       let tx = await bridge.functions.unlock(
-        originalToken,
+        transfer.token,
         transfer.amount.toString(),
         {
           value: ethers.utils.parseEther("0.0000001"),

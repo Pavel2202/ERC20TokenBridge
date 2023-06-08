@@ -30,6 +30,9 @@ const listener = async () => {
       from: from,
       to: to,
       token: token,
+      wrappedToken: "0x0",
+      fromBridge: "Sepolia",
+      toBridge: "Mumbai",
       amount: amount,
       isClaimed: false,
     };
@@ -38,20 +41,26 @@ const listener = async () => {
     await transfer.save();
   });
 
-  await polygonBridge.on("Burned", async (from, to, token, amount) => {
-    console.log("burned");
+  await polygonBridge.on(
+    "Burned",
+    async (from, to, wrappedToken, token, amount) => {
+      console.log("burned");
 
-    const data = {
-      from: from,
-      to: to,
-      token: token,
-      amount: amount,
-      isClaimed: false,
-    };
+      const data = {
+        from: from,
+        to: to,
+        token: token,
+        wrappedToken: wrappedToken,
+        fromBridge: "Mumbai",
+        toBridge: "Sepolia",
+        amount: amount,
+        isClaimed: false,
+      };
 
-    const transfer = new Transfer(data);
-    await transfer.save();
-  });
+      const transfer = new Transfer(data);
+      await transfer.save();
+    }
+  );
 };
 
 module.exports = listener;

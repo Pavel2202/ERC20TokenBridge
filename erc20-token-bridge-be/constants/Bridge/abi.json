@@ -24,15 +24,21 @@
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "receiver",
         "type": "address"
       },
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "originalToken",
+        "type": "address"
+      },
+      {
         "indexed": true,
         "internalType": "address",
-        "name": "token",
+        "name": "wrappedToken",
         "type": "address"
       },
       {
@@ -43,6 +49,25 @@
       }
     ],
     "name": "Burned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "FeeUpdated",
     "type": "event"
   },
   {
