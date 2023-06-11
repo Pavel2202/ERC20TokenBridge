@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { useMoralis } from "react-moralis";
 import { ConnectButton } from "web3uikit";
 
@@ -44,7 +45,7 @@ const Header = () => {
 
   async function changeNetworkHandler(e) {
     e.preventDefault();
-    changeNetwork(e.target.textContent.toLowerCase());
+    changeNetwork(e.currentTarget.id);
   }
 
   return (
@@ -78,18 +79,18 @@ const Header = () => {
             {chainId == 11155111 ? (
               <button
                 onClick={changeNetworkHandler}
-                id="change-mumbai"
+                id="mumbai"
                 className="inline py-2 px-4 text-black-400"
               >
-                Mumbai
+                <Image src={"https://cdn.iconscout.com/icon/free/png-256/free-polygon-token-4086724-3379854.png"} alt="text" width={40} height={40} />
               </button>
             ) : (
               <button
                 onClick={changeNetworkHandler}
-                id="change-sepolia"
+                id="sepolia"
                 className="inline py-2 px-4 text-black-400"
               >
-                Sepolia
+                <Image src={"https://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/512/Ethereum-ETH-icon.png"} alt="text" width={40} height={40} />
               </button>
             )}
           </li>

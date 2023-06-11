@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 const HomePage = () => {
   return (
     <>
@@ -11,10 +9,6 @@ const HomePage = () => {
       <h3>
         <strong>Start Bridging</strong>
       </h3>
-
-      <Link href="/transfer" className="inline py-2 px-4 text-black-400">
-        Transfer
-      </Link>
     </>
   );
 };

@@ -3,12 +3,12 @@ import HistoryCard from "./HistoryCard";
 const HistoryList = ({ transfers }) => {
   return (
     <>
-      <div>
+      <div className="flex justify-center items-center m-5">
         {transfers.length > 0 ? (
           transfers.map((x) => <HistoryCard key={x._id} transfer={x} />)
         ) : (
           <div>
-            <p>No transfers</p>
+            <p>No history to display</p>
           </div>
         )}
       </div>

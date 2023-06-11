@@ -61,22 +61,20 @@ const TransferCard = ({ transfer }) => {
     }
 
     if (chainId == 80001) {
-      let wtoken = await bridge.functions.tokenToWrappedToken(
-        token.token_address
-      );
-      console.log(wtoken);
-      
-      let tx = await bridge.functions.mint(
+      await bridge.functions.mint(
         token.token_address,
         "W" + token.name,
         "W" + token.symbol,
         transfer.amount.toString()
       );
-      await tx.wait(1);
-      console.log(tx);
+
+      let wtoken = await bridge.functions.tokenToWrappedToken(
+        token.token_address
+      );
+      console.log(wtoken);
     } else {
       const feeData = await provider.getFeeData();
-      let tx = await bridge.functions.unlock(
+      await bridge.functions.unlock(
         transfer.token,
         transfer.amount.toString(),
         {
@@ -85,11 +83,9 @@ const TransferCard = ({ transfer }) => {
           maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
         }
       );
-      await tx.wait(1);
-      console.log(tx);
     }
 
-    let response = await fetch(
+    await fetch(
       `http://localhost:3001/transfers/${transfer._id}`,
       {
         method: "PUT",
@@ -99,10 +95,6 @@ const TransferCard = ({ transfer }) => {
         body: JSON.stringify({ ...transfer }),
       }
     );
-
-    console.log(response);
-    let result = await response.json();
-    console.log(result);
   }
 
   return (
@@ -110,11 +102,11 @@ const TransferCard = ({ transfer }) => {
       <span className="w-96 border-solid border-4 rounded-md border-black">
         <span className="mr-6">
           From: {transfer.from.slice(0, 6)}...
-          {transfer.from.slice(transfer.from.length - 4)}
+          {transfer.from.slice(transfer.from.length - 4)} ({transfer.fromBridge})
         </span>{" "}
         <span className="mr-6">
           To: {transfer.to.slice(0, 6)}...
-          {transfer.from.slice(transfer.to.length - 4)}
+          {transfer.from.slice(transfer.to.length - 4)} ({transfer.toBridge})
         </span>
         <span className="mr-6">
           Token: {transfer.token.slice(0, 6)}...
