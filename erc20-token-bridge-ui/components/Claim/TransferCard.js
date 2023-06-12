@@ -103,7 +103,7 @@ const TransferCard = ({ transfer }) => {
         <span className="mr-6">
           From: {transfer.from.slice(0, 6)}...
           {transfer.from.slice(transfer.from.length - 4)} ({transfer.fromBridge})
-        </span>{" "}
+        </span>
         <span className="mr-6">
           To: {transfer.to.slice(0, 6)}...
           {transfer.from.slice(transfer.to.length - 4)} ({transfer.toBridge})
@@ -111,11 +111,11 @@ const TransferCard = ({ transfer }) => {
         <span className="mr-6">
           Token: {transfer.token.slice(0, 6)}...
           {transfer.token.slice(transfer.token.length - 4)}
-        </span>{" "}
+        </span>
         <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
       </span>
       <button
-        className="shadow bg-lime-500 hover:bg-lime-400 focus:shadow-outline focus:outline-none text-white font-bold rounded"
+        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded"
         onClick={withdrawFromBridge}
       >
         Claim

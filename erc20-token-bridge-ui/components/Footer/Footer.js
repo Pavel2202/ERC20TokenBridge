@@ -1,6 +1,6 @@
 const Footer = () => {
   return (
-    <footer className="absolute bottom-0 w-full shadow bg-lime-600">
+    <footer className="absolute bottom-0 w-full shadow bg-orange-600">
       <p className="text-sm text-white sm:text-center">
         ERC20 Token Bridge
       </p>

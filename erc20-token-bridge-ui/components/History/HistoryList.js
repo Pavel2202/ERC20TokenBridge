@@ -1,6 +1,6 @@
 import HistoryCard from "./HistoryCard";
 
-const HistoryList = ({ transfers }) => {
+const HistoryList = ({ transfers, pages }) => {
   return (
     <>
       <div className="flex justify-center items-center m-5">
