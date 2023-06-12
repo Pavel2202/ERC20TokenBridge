@@ -1,4 +1,5 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const databaseConfig = require("./config/database");
 const routesConfig = require("./config/routes");
 const cors = require("cors");
@@ -9,7 +10,9 @@ start();
 async function start() {
   const app = express();
 
-  app.use(express.json());
+  //app.use(express.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
   app.use(cors());
   await databaseConfig(app);
   routesConfig(app);

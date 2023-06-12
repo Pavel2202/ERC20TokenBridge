@@ -27,10 +27,10 @@ const listener = async () => {
     console.log("locked");
 
     const data = {
-      from: from,
-      to: to,
+      from: from.toLowerCase(),
+      to: to.toLowerCase(),
       token: token,
-      wrappedToken: "0x0",
+      wrappedToken: null,
       fromBridge: "Sepolia",
       toBridge: "Mumbai",
       amount: amount,

@@ -17,8 +17,8 @@ const TransferCard = ({ transfer }) => {
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
-      startMoralis();
-      getTokens();
+      //startMoralis();
+      //getTokens();
     }
   }, []);
 
