@@ -73,36 +73,31 @@ const TransferCard = ({ transfer }) => {
       );
       console.log(wtoken);
     } else {
-      const feeData = await provider.getFeeData();
       await bridge.functions.unlock(
         transfer.token,
         transfer.amount.toString(),
         {
           value: ethers.utils.parseEther("0.0000001"),
-          maxFeePerGas: BigNumber.from(feeData.maxFeePerGas),
-          maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
         }
       );
     }
 
-    await fetch(
-      `http://localhost:3001/transfers/${transfer._id}`,
-      {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ ...transfer }),
-      }
-    );
+    await fetch(`http://localhost:3001/transfers/${transfer._id}`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ ...transfer }),
+    });
   }
 
   return (
-    <div>
-      <span className="w-96 border-solid border-4 rounded-md border-black">
+    <div className="mb-3 ml-[500px] grid grid-cols-2">
+      <span className="mr-5 border-solid border-4 rounded-md border-black">
         <span className="mr-6">
           From: {transfer.from.slice(0, 6)}...
-          {transfer.from.slice(transfer.from.length - 4)} ({transfer.fromBridge})
+          {transfer.from.slice(transfer.from.length - 4)} ({transfer.fromBridge}
+          )
         </span>
         <span className="mr-6">
           To: {transfer.to.slice(0, 6)}...
@@ -115,7 +110,7 @@ const TransferCard = ({ transfer }) => {
         <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
       </span>
       <button
-        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded"
+        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-12"
         onClick={withdrawFromBridge}
       >
         Claim

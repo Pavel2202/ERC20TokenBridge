@@ -25,7 +25,7 @@ const History = () => {
       .then((data) => {
         setPages(data);
       });
-  });
+  }, []);
 
   useEffect(() => {
     const currentPage = router.query.page === undefined ? 1 : router.query.page;
@@ -41,13 +41,14 @@ const History = () => {
       .then((data) => {
         setTransfers(data);
       });
-  }, [pageNumber]);
+  }, [pageNumber, chainId]);
 
   return (
-    <>
+    <div className="overflow-hidden">
+      <h1>History</h1>
       <HistoryList transfers={tranfers}></HistoryList>
       <Pagination routeName="history" page={pageNumber} pagesCount={pages} />
-    </>
+    </div>
   );
 };
 

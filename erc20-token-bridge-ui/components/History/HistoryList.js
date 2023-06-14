@@ -1,9 +1,8 @@
 import HistoryCard from "./HistoryCard";
 
-const HistoryList = ({ transfers, pages }) => {
+const HistoryList = ({ transfers }) => {
   return (
-    <>
-      <div className="flex justify-center items-center m-5">
+      <div className="w-max m-5">
         {transfers.length > 0 ? (
           transfers.map((x) => <HistoryCard key={x._id} transfer={x} />)
         ) : (
@@ -12,7 +11,6 @@ const HistoryList = ({ transfers, pages }) => {
           </div>
         )}
       </div>
-    </>
   );
 };
 

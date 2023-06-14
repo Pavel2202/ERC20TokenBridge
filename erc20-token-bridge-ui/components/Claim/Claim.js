@@ -44,10 +44,10 @@ const Claim = () => {
   }, [pageNumber]);
 
   return (
-    <>
+    <div className="overflow-hidden">
       <TransferList transfers={tranfers} />
       <Pagination routeName="claim" page={pageNumber} pagesCount={pages} />
-    </>
+    </div>
   );
 };
 

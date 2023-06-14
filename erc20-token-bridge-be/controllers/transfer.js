@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const Transfer = require("../models/Transfer");
 
-const perPage = 1;
+const perPage = 10;
 
 router.get("/pages", async (req, res) => {
   const chainName = req.query.chainName;
@@ -14,7 +14,7 @@ router.get("/pages", async (req, res) => {
     .find({ isClaimed: req.query.claimed })
     .sort([["_id", -1]]);
 
-  res.json(result.length);
+  res.json(Math.ceil(result.length / perPage));
 });
 
 router.get("/transfers", async (req, res) => {
