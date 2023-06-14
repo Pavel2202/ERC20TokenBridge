@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Moralis from "moralis";
 import { EvmChain } from "@moralisweb3/common-evm-utils";
 import { useMoralis } from "react-moralis";
+import { useNotification } from "web3uikit";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAbi } from "@/constants/Token";
 
@@ -11,6 +12,8 @@ const Transfer = () => {
   const chainId = parseInt(chainIdHex);
   const bridgeAddress =
     chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
+
+  const dispatch = useNotification();
 
   const [provider, setProvider] = useState({});
   const [tokens, setTokens] = useState({});
@@ -128,8 +131,11 @@ const Transfer = () => {
     let formData = new FormData(e.target);
 
     let to = formData.get("to");
-    let token = formData.get("token");
+    //let token = formData.get("token");
+    let token = "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21";
     let amount = formData.get("amount");
+
+    let tx;
 
     if (chainId == 11155111) {
       const tokenContract = new ethers.Contract(
@@ -154,7 +160,7 @@ const Transfer = () => {
       };
 
       const feeData = await provider.getFeeData();
-      await bridge.functions.lock(
+      tx = await bridge.functions.lock(
         to,
         token,
         ethers.utils.parseUnits(amount, 18),
@@ -190,7 +196,7 @@ const Transfer = () => {
         s: s,
       };
 
-      await bridge.functions.burn(
+      tx = await bridge.functions.burn(
         to,
         token,
         ethers.utils.parseUnits(amount, 18),
@@ -199,6 +205,17 @@ const Transfer = () => {
     }
 
     e.target.reset();
+    await tx.wait();
+    handleSuccess(token);
+  }
+
+  function handleSuccess(token) {
+    dispatch({
+      type: "success",
+      message: "Transfered " + token,
+      title: "Tx Notification",
+      position: "topR",
+    });
   }
 
   return (

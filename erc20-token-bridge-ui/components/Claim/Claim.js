@@ -25,7 +25,7 @@ const Claim = () => {
       .then((data) => {
         setPages(data);
       });
-  });
+  }, [chainId]);
 
   useEffect(() => {
     const currentPage = router.query.page === undefined ? 1 : router.query.page;
@@ -41,7 +41,7 @@ const Claim = () => {
       .then((data) => {
         setTransfers(data);
       });
-  }, [pageNumber]);
+  }, [pageNumber, chainId]);
 
   return (
     <div className="overflow-hidden">

@@ -40,7 +40,7 @@ router.put("/transfers/:id", async (req, res) => {
   const transfer = await Transfer.findById(id);
   transfer.isClaimed = true;
   await transfer.save();
-  return transfer;
+  res.json(transfer);
 });
 
 module.exports = router;

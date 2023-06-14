@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Moralis from "moralis";
 import { EvmChain } from "@moralisweb3/common-evm-utils";
 import { useMoralis } from "react-moralis";
+import { useNotification } from "web3uikit";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 
 const TransferCard = ({ transfer }) => {
@@ -10,6 +11,8 @@ const TransferCard = ({ transfer }) => {
   const chainId = parseInt(chainIdHex);
   const bridgeAddress =
     chainId in bridgeAddresses ? bridgeAddresses[chainId] : null;
+
+  const dispatch = useNotification();
 
   const [provider, setProvider] = useState({});
   const [tokens, setTokens] = useState({});
@@ -51,6 +54,8 @@ const TransferCard = ({ transfer }) => {
 
     let tokenAddress = transfer.token;
     let token;
+    let receivedToken;
+    let tx;
 
     for (let key in tokens) {
       if (
@@ -61,27 +66,33 @@ const TransferCard = ({ transfer }) => {
     }
 
     if (chainId == 80001) {
-      await bridge.functions.mint(
-        token.token_address,
-        "W" + token.name,
-        "W" + token.symbol,
+      tx = await bridge.functions.mint(
+        //token.token_address,
+        //"W" + token.name,
+        //"W" + token.symbol,
+        "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21",
+        "WTokenShark",
+        "WSHARK",
         transfer.amount.toString()
       );
 
+      //token.token_address
       let wtoken = await bridge.functions.tokenToWrappedToken(
-        token.token_address
+        "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21"
       );
-      console.log(wtoken);
+      receivedToken = wtoken;
     } else {
-      await bridge.functions.unlock(
+      tx = await bridge.functions.unlock(
         transfer.token,
         transfer.amount.toString(),
         {
           value: ethers.utils.parseEther("0.0000001"),
         }
       );
+      receivedToken = transfer.token;
     }
 
+    await tx.wait();
     await fetch(`http://localhost:3001/transfers/${transfer._id}`, {
       method: "PUT",
       headers: {
@@ -89,6 +100,26 @@ const TransferCard = ({ transfer }) => {
       },
       body: JSON.stringify({ ...transfer }),
     });
+
+    handleSuccess(receivedToken);
+  }
+
+  function handleSuccess(receivedToken) {
+    dispatch({
+      type: "success",
+      message: "Claimed " + receivedToken,
+      title: "Tx Notification",
+      position: "topR",
+    });
+
+    alert("Copied the text: " + receivedToken);
+
+    addEventListener("click", copyToClipboard(receivedToken));
+    removeEventListener("click", copyToClipboard(receivedToken));
+  }
+
+  function copyToClipboard(receivedToken) {
+    navigator.clipboard.writeText(receivedToken);
   }
 
   return (
