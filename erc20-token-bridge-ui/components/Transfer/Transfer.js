@@ -239,7 +239,7 @@ const Transfer = () => {
   return (
     <>
       <div className="justify-center items-center">
-        <h1>Transfer</h1>
+        <h1 className="mb-3 ml-[900px] grid grid-cols-2 font-bold text-xl">Transfer</h1>
         <form onSubmit={depositToBridge}>
           <div className="mb-6">
             <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">

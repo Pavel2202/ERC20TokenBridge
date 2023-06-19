@@ -45,6 +45,9 @@ const Claim = () => {
 
   return (
     <div className="overflow-hidden">
+      <h1 className="mb-3 ml-[900px] grid grid-cols-2 font-bold text-xl">
+        Claim
+      </h1>
       <TransferList transfers={tranfers} />
       <Pagination routeName="claim" page={pageNumber} pagesCount={pages} />
     </div>
