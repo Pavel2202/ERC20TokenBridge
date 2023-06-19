@@ -44,64 +44,73 @@ const TransferCard = ({ transfer }) => {
   }
 
   async function withdrawFromBridge(e) {
-    e.preventDefault();
+    try {
+      e.preventDefault();
+      e.currentTarget.disabled = true;
+      e.currentTarget.textContent = "Claimed";
 
-    const bridge = new ethers.Contract(
-      bridgeAddress,
-      bridgeAbi,
-      provider.getSigner()
-    );
-
-    let tokenAddress = transfer.token;
-    let token;
-    let receivedToken;
-    let tx;
-
-    for (let key in tokens) {
-      if (
-        tokens[key].token_address.toLowerCase() == tokenAddress.toLowerCase()
-      ) {
-        token = tokens[key];
-      }
-    }
-
-    if (chainId == 80001) {
-      tx = await bridge.functions.mint(
-        //token.token_address,
-        //"W" + token.name,
-        //"W" + token.symbol,
-        "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21",
-        "WTokenShark",
-        "WSHARK",
-        transfer.amount.toString()
+      const bridge = new ethers.Contract(
+        bridgeAddress,
+        bridgeAbi,
+        provider.getSigner()
       );
 
-      //token.token_address
-      let wtoken = await bridge.functions.tokenToWrappedToken(
-        "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21"
-      );
-      receivedToken = wtoken;
-    } else {
-      tx = await bridge.functions.unlock(
-        transfer.token,
-        transfer.amount.toString(),
-        {
-          value: ethers.utils.parseEther("0.0000001"),
+      let tokenAddress = transfer.token;
+      let token;
+      let receivedToken;
+      let tx;
+
+      for (let key in tokens) {
+        if (
+          tokens[key].token_address.toLowerCase() == tokenAddress.toLowerCase()
+        ) {
+          token = tokens[key];
         }
-      );
-      receivedToken = transfer.token;
+      }
+
+      if (chainId == 80001) {
+        tx = await bridge.functions.mint(
+          //token.token_address,
+          //"W" + token.name,
+          //"W" + token.symbol,
+          "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21",
+          "WTokenShark",
+          "WSHARK",
+          transfer.amount.toString()
+        );
+
+        //token.token_address
+        let wtoken = await bridge.functions.tokenToWrappedToken(
+          "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21"
+        );
+        receivedToken = wtoken;
+      } else {
+        tx = await bridge.functions.unlock(
+          transfer.token,
+          transfer.amount.toString(),
+          {
+            value: ethers.utils.parseEther("0.0000001"),
+          }
+        );
+        receivedToken = transfer.token;
+      }
+
+      await tx.wait();
+      await fetch(`http://localhost:3001/transfers/${transfer._id}`, {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ ...transfer }),
+      });
+
+      handleSuccess(receivedToken);
+    } catch (err) {
+      console.log(e);
+      handleError(err.message)
+      e.target.disabled = false;
+      e.target.textContent = "Claim";
     }
-
-    await tx.wait();
-    await fetch(`http://localhost:3001/transfers/${transfer._id}`, {
-      method: "PUT",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ ...transfer }),
-    });
-
-    handleSuccess(receivedToken);
   }
 
   function handleSuccess(receivedToken) {
@@ -120,6 +129,15 @@ const TransferCard = ({ transfer }) => {
 
   function copyToClipboard(receivedToken) {
     navigator.clipboard.writeText(receivedToken);
+  }
+
+  function handleError(message) {
+    dispatch({
+      type: "error",
+      message: message,
+      title: "Error Notification",
+      position: "topR",
+    });
   }
 
   return (
@@ -141,7 +159,7 @@ const TransferCard = ({ transfer }) => {
         <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
       </span>
       <button
-        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-12"
+        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-16"
         onClick={withdrawFromBridge}
       >
         Claim

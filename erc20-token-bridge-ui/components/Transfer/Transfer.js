@@ -120,93 +120,102 @@ const Transfer = () => {
   }
 
   async function depositToBridge(e) {
-    e.preventDefault();
-    const account = ethereum.selectedAddress;
-    const bridge = new ethers.Contract(
-      bridgeAddress,
-      bridgeAbi,
-      provider.getSigner()
-    );
+    try {
+      e.preventDefault();
 
-    let formData = new FormData(e.target);
+      if (bridgeAddress == null) {
+        throw new Error("Invalid chain");
+      }
 
-    let to = formData.get("to");
-    //let token = formData.get("token");
-    let token = "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21";
-    let amount = formData.get("amount");
-
-    let tx;
-
-    if (chainId == 11155111) {
-      const tokenContract = new ethers.Contract(
-        token,
-        tokenAbi,
+      const account = ethereum.selectedAddress;
+      const bridge = new ethers.Contract(
+        bridgeAddress,
+        bridgeAbi,
         provider.getSigner()
       );
 
-      const { v, r, s, deadline } = await onPermit(
-        account,
-        bridge.address,
-        provider,
-        ethers.utils.parseUnits(amount, 18),
-        tokenContract
-      );
+      let formData = new FormData(e.target);
+      let to = formData.get("to");
+      //let token = formData.get("token");
+      let token = "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21";
+      let amount = formData.get("amount");
 
-      let signatureData = {
-        deadline: deadline,
-        v: v,
-        r: r,
-        s: s,
-      };
+      let tx;
 
-      const feeData = await provider.getFeeData();
-      tx = await bridge.functions.lock(
-        to,
-        token,
-        ethers.utils.parseUnits(amount, 18),
-        signatureData,
-        {
-          value: ethers.utils.parseEther("0.0000001"),
-          maxFeePerGas: BigNumber.from(feeData.maxFeePerGas),
-          maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
-        }
-      );
-    } else {
-      const wtoken = await bridge.tokenToWrappedToken(token);
-      console.log(wtoken);
+      if (chainId == 11155111) {
+        const tokenContract = new ethers.Contract(
+          token,
+          tokenAbi,
+          provider.getSigner()
+        );
 
-      const tokenContract = new ethers.Contract(
-        wtoken,
-        tokenAbi,
-        provider.getSigner()
-      );
+        const { v, r, s, deadline } = await onPermit(
+          account,
+          bridge.address,
+          provider,
+          ethers.utils.parseUnits(amount, 18),
+          tokenContract
+        );
 
-      const { v, r, s, deadline } = await onPermit(
-        account,
-        bridge.address,
-        provider,
-        ethers.utils.parseUnits(amount, 18),
-        tokenContract
-      );
+        let signatureData = {
+          deadline: deadline,
+          v: v,
+          r: r,
+          s: s,
+        };
 
-      let signatureData = {
-        deadline: deadline,
-        v: v,
-        r: r,
-        s: s,
-      };
+        const feeData = await provider.getFeeData();
+        tx = await bridge.functions.lock(
+          to,
+          token,
+          ethers.utils.parseUnits(amount, 18),
+          signatureData,
+          {
+            value: ethers.utils.parseEther("0.0000001"),
+            maxFeePerGas: BigNumber.from(feeData.maxFeePerGas),
+            maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
+          }
+        );
+      } else {
+        const wtoken = await bridge.tokenToWrappedToken(token);
+        console.log(wtoken);
 
-      tx = await bridge.functions.burn(
-        to,
-        token,
-        ethers.utils.parseUnits(amount, 18),
-        signatureData
-      );
+        const tokenContract = new ethers.Contract(
+          wtoken,
+          tokenAbi,
+          provider.getSigner()
+        );
+
+        const { v, r, s, deadline } = await onPermit(
+          account,
+          bridge.address,
+          provider,
+          ethers.utils.parseUnits(amount, 18),
+          tokenContract
+        );
+
+        let signatureData = {
+          deadline: deadline,
+          v: v,
+          r: r,
+          s: s,
+        };
+
+        tx = await bridge.functions.burn(
+          to,
+          token,
+          ethers.utils.parseUnits(amount, 18),
+          signatureData
+        );
+      }
+
+      e.target.reset();
+      await tx.wait();
+      handleSuccess(token);
+    } catch (err) {
+      console.log(err.message);
+      handleError(err.message);
     }
-
-    e.target.reset();
-    await tx.wait();
-    handleSuccess(token);
   }
 
   function handleSuccess(token) {
@@ -214,6 +223,15 @@ const Transfer = () => {
       type: "success",
       message: "Transfered " + token,
       title: "Tx Notification",
+      position: "topR",
+    });
+  }
+
+  function handleError(message) {
+    dispatch({
+      type: "error",
+      message: message,
+      title: "Error Notification",
       position: "topR",
     });
   }
