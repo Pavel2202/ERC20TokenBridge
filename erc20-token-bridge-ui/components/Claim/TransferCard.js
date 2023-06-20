@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from "ethers";
+import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 import Moralis from "moralis";
 import { EvmChain } from "@moralisweb3/common-evm-utils";
@@ -107,7 +107,7 @@ const TransferCard = ({ transfer }) => {
       handleSuccess(receivedToken);
     } catch (err) {
       console.log(e);
-      handleError(err.message)
+      handleError(err.message);
       e.target.disabled = false;
       e.target.textContent = "Claim";
     }
@@ -156,7 +156,9 @@ const TransferCard = ({ transfer }) => {
           Token: {transfer.token.slice(0, 6)}...
           {transfer.token.slice(transfer.token.length - 4)}
         </span>
-        <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
+        <span className="mr-6">
+          Amount: {ethers.utils.formatUnits(transfer.amount.toString(), "ether")}
+        </span>
       </span>
       <button
         className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-16"

@@ -1,3 +1,5 @@
+import { ethers } from "ethers";
+
 const HistoryCard = ({ transfer }) => {
   return (
       <div className="mb-3 ml-[600px] grid grid-cols-2">
@@ -14,7 +16,7 @@ const HistoryCard = ({ transfer }) => {
             Token: {transfer.token.slice(0, 6)}...
             {transfer.token.slice(transfer.token.length - 4)}
           </span>{" "}
-          <span className="mr-6">Amount: {transfer.amount / 10 ** 18}</span>
+          <span className="mr-6">Amount: {ethers.utils.formatUnits(transfer.amount.toString(), "ether")}</span>
         </div>
       </div>
   );
