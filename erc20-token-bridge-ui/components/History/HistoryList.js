@@ -2,15 +2,15 @@ import HistoryCard from "./HistoryCard";
 
 const HistoryList = ({ transfers }) => {
   return (
-      <div className="w-max m-5">
-        {transfers.length > 0 ? (
-          transfers.map((x) => <HistoryCard key={x._id} transfer={x} />)
-        ) : (
-          <div>
-            <p>No history to display</p>
-          </div>
-        )}
-      </div>
+    <div className="items-stretch justify-center">
+      {transfers.length > 0 ? (
+        transfers.map((x) => <HistoryCard key={x._id} transfer={x} />)
+      ) : (
+        <div>
+          <p className="mb-3 flex items-stretch justify-center">No history to display</p>
+        </div>
+      )}
+    </div>
   );
 };
 

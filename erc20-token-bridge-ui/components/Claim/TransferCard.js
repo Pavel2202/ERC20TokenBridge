@@ -7,6 +7,8 @@ import { useNotification } from "web3uikit";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 
 const TransferCard = ({ transfer }) => {
+  const baseUrl = "http://localhost:3001";
+
   const { chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
   const bridgeAddress =
@@ -96,7 +98,7 @@ const TransferCard = ({ transfer }) => {
       }
 
       await tx.wait();
-      await fetch(`http://localhost:3001/transfers/${transfer._id}`, {
+      await fetch(`${baseUrl}/transfers/${transfer._id}`, {
         method: "PUT",
         headers: {
           "content-type": "application/json",
@@ -141,7 +143,7 @@ const TransferCard = ({ transfer }) => {
   }
 
   return (
-    <div className="mb-3 ml-[500px] grid grid-cols-2">
+    <div className="mb-3 flex items-stretch justify-center">
       <span className="mr-5 border-solid border-4 rounded-md border-black">
         <span className="mr-6">
           From: {transfer.from.slice(0, 6)}...
@@ -157,7 +159,8 @@ const TransferCard = ({ transfer }) => {
           {transfer.token.slice(transfer.token.length - 4)}
         </span>
         <span className="mr-6">
-          Amount: {ethers.utils.formatUnits(transfer.amount.toString(), "ether")}
+          Amount:
+          {ethers.utils.formatUnits(transfer.amount.toString(), "ether")}
         </span>
       </span>
       <button

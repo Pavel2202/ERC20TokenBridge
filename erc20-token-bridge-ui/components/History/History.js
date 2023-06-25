@@ -45,7 +45,7 @@ const History = () => {
 
   return (
     <div className="overflow-hidden">
-      <h1 className="mb-3 ml-[900px] grid grid-cols-2 font-bold text-xl" >History</h1>
+      <h1 className="mb-3 flex items-center justify-center font-bold text-xl" >History</h1>
       <HistoryList transfers={tranfers}></HistoryList>
       <Pagination routeName="history" page={pageNumber} pagesCount={pages} />
     </div>
