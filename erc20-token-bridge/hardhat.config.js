@@ -9,6 +9,9 @@ const PASS_PHRASE = process.env.PASS_PHRASE;
 const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL;
 
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY;
+
 module.exports = {
   defaultNetwork: "hardhat",
   networks: {
@@ -35,6 +38,12 @@ module.exports = {
         count: 20,
         passphrase: PASS_PHRASE,
       },
+    },
+  },
+  etherscan: {
+    apiKey: {
+      sepolia: ETHERSCAN_API_KEY,
+      polygonMumbai: POLYGONSCAN_API_KEY,
     },
   },
   solidity: "0.8.19",

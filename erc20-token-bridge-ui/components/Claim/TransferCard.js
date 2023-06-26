@@ -18,6 +18,7 @@ const TransferCard = ({ transfer }) => {
 
   const [provider, setProvider] = useState({});
   const [tokens, setTokens] = useState({});
+  const [receivedToken, setReceivedToken] = useState("");
 
   useEffect(() => {
     startMoralis();
@@ -57,7 +58,7 @@ const TransferCard = ({ transfer }) => {
       }
 
       e.currentTarget.disabled = true;
-      e.currentTarget.textContent = "Claimed";
+      e.currentTarget.textContent = "Claiming...";
 
       const bridge = new ethers.Contract(
         bridgeAddress,
@@ -67,8 +68,7 @@ const TransferCard = ({ transfer }) => {
 
       let tokenAddress = transfer.token;
       let token;
-      let receivedToken;
-      let tx;
+      let receivedTokenTemp;
 
       for (let key in tokens) {
         if (
@@ -79,31 +79,32 @@ const TransferCard = ({ transfer }) => {
       }
 
       if (chainId == 11155111) {
-        tx = await bridge.functions.unlock(
+        let tx = await bridge.functions.unlock(
           transfer.token,
           transfer.amount.toString(),
           {
             value: ethers.utils.parseEther("0.0000001"),
           }
         );
-        receivedToken = transfer.token;
+        await tx.wait();
+        receivedTokenTemp = transfer.token;
       } else if (chainId == 80001) {
-        tx = await bridge.functions.mint(
+        let tx = await bridge.functions.mint(
           token.token_address,
           "W" + token.name,
           "W" + token.symbol,
           transfer.amount.toString()
         );
+        await tx.wait();
 
         let wtoken = await bridge.functions.tokenToWrappedToken(
           token.token_address
         );
-        receivedToken = wtoken;
+        receivedTokenTemp = wtoken;
       } else {
         throw new Error("Invalid chain");
       }
 
-      await tx.wait();
       await fetch(`${baseUrl}/transfers/${transfer._id}`, {
         method: "PUT",
         headers: {
@@ -112,7 +113,8 @@ const TransferCard = ({ transfer }) => {
         body: JSON.stringify({ ...transfer }),
       });
 
-      handleSuccess(receivedToken);
+      e.target.textContent = "Claimed";
+      handleSuccess(receivedTokenTemp);
     } catch (err) {
       console.log(e);
       handleError(err.message);
@@ -121,22 +123,21 @@ const TransferCard = ({ transfer }) => {
     }
   }
 
-  function handleSuccess(receivedToken) {
+  function handleSuccess(receivedTokenTemp) {
     dispatch({
       type: "success",
-      message: "Claimed " + receivedToken,
+      message: "Claimed " + receivedTokenTemp,
       title: "Tx Notification",
       position: "topR",
     });
 
-    alert("Copied the text: " + receivedToken);
-
-    addEventListener("click", copyToClipboard(receivedToken));
-    removeEventListener("click", copyToClipboard(receivedToken));
+    setReceivedToken(receivedTokenTemp);
   }
 
-  function copyToClipboard(receivedToken) {
-    navigator.clipboard.writeText(receivedToken);
+  async function copyToClipboard(e) {
+    console.log(receivedToken);
+    await navigator.clipboard.writeText(receivedToken);
+    alert("Copied token address: " + receivedToken);
   }
 
   function handleError(message) {
@@ -170,10 +171,18 @@ const TransferCard = ({ transfer }) => {
         </span>
       </span>
       <button
-        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-16"
+        id="withdrawButton"
+        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-24 mr-3"
         onClick={withdrawFromBridge}
       >
         Claim
+      </button>
+      <button
+        id="copyAddressButton"
+        className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold rounded w-16"
+        onClick={copyToClipboard}
+      >
+        Copy
       </button>
     </div>
   );

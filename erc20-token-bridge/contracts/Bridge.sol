@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 
 import "./IBridge.sol";
 import "./Token.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 error InsufficientFee();
 error InvalidAmount();
