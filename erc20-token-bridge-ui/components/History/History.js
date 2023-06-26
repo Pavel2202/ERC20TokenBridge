@@ -3,6 +3,7 @@ import { useMoralis } from "react-moralis";
 import { useRouter } from "next/router";
 import HistoryList from "./HistoryList";
 import Pagination from "../Pagination/Pagination";
+import BlockNumber from "../BlockNumber/BlockNumber";
 
 const History = () => {
   const baseUrl = "http://localhost:3001";
@@ -44,7 +45,10 @@ const History = () => {
 
   return (
     <div className="overflow-hidden">
-      <h1 className="mb-3 flex items-center justify-center font-bold text-xl" >History</h1>
+      <BlockNumber />
+      <h1 className="mb-3 flex items-center justify-center font-bold text-xl">
+        History
+      </h1>
       <HistoryList transfers={tranfers}></HistoryList>
       <Pagination routeName="history" page={pageNumber} pagesCount={pages} />
     </div>

@@ -6,6 +6,8 @@ const nextConfig = {
   },
   env: {
     MORALIS_API_KEY: process.env.MORALIS_API_KEY,
+    SEPOLIA_RPC_URL: process.env.SEPOLIA_RPC_URL,
+    MUMBAI_RPC_URL: process.env.MUMBAI_RPC_URL,
   },
   reactStrictMode: true,
 };

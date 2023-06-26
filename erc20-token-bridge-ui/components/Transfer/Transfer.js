@@ -6,6 +6,7 @@ import { useMoralis } from "react-moralis";
 import { useNotification } from "web3uikit";
 import { bridgeAddresses, bridgeAbi } from "@/constants/Bridge";
 import { tokenAbi } from "@/constants/Token";
+import BlockNumber from "../BlockNumber/BlockNumber";
 
 const Transfer = () => {
   const { chainId: chainIdHex } = useMoralis();
@@ -237,6 +238,7 @@ const Transfer = () => {
 
   return (
     <div>
+      <BlockNumber />
       <h1 className="mb-3 flex items-center justify-center font-bold text-xl">
         Transfer
       </h1>

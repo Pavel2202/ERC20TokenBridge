@@ -3,6 +3,7 @@ import { useMoralis } from "react-moralis";
 import { useRouter } from "next/router";
 import TransferList from "./TransferList";
 import Pagination from "../Pagination/Pagination";
+import BlockNumber from "../BlockNumber/BlockNumber";
 
 const Claim = () => {
   const baseUrl = "http://localhost:3001";
@@ -44,6 +45,7 @@ const Claim = () => {
 
   return (
     <div className="overflow-hidden">
+      <BlockNumber />
       <h1 className="mb-3 flex items-center justify-center font-bold text-xl">
         Claim
       </h1>
