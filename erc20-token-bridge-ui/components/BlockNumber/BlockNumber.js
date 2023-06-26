@@ -5,21 +5,27 @@ import { useMoralis } from "react-moralis";
 const BlockNumber = () => {
   const { chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
-  let providerRpcUrl;
 
+  const [provider, setProvider] = useState({});
   const [blockNumber, setBlockNumber] = useState(0);
 
   useEffect(() => {
-    setBlockNumber(0);
+    if (typeof window.ethereum !== "undefined") {
+      setProvider(new ethers.providers.Web3Provider(window.ethereum));
+    }
   }, [chainId]);
 
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  useEffect(() => {
+    setBlockNumber(provider._lastBlockNumber);
+  }, [provider]);
 
-  provider.on("block", (newBlockNumber) => {
-    if (newBlockNumber > blockNumber) {
-      setBlockNumber(newBlockNumber);
-    }
-  });
+  if (Object.keys(provider).length > 0) {
+    provider.on("block", (newBlockNumber) => {
+      if (newBlockNumber > blockNumber) {
+        setBlockNumber(newBlockNumber);
+      }
+    });
+  }
 
   return <p className="absolute float-left">{blockNumber}</p>;
 };

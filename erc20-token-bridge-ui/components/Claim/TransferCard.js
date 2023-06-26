@@ -22,10 +22,10 @@ const TransferCard = ({ transfer }) => {
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
-      //startMoralis();
-      //getTokens();
+      startMoralis();
+      getTokens();
     }
-  }, []);
+  }, [chainId]);
 
   async function startMoralis() {
     if (!Moralis.Core.isStarted) {
@@ -48,6 +48,11 @@ const TransferCard = ({ transfer }) => {
   async function withdrawFromBridge(e) {
     try {
       e.preventDefault();
+
+      if (bridgeAddress == null) {
+        throw new Error("Invalid chain");
+      }
+
       e.currentTarget.disabled = true;
       e.currentTarget.textContent = "Claimed";
 
@@ -70,23 +75,7 @@ const TransferCard = ({ transfer }) => {
         }
       }
 
-      if (chainId == 80001) {
-        tx = await bridge.functions.mint(
-          //token.token_address,
-          //"W" + token.name,
-          //"W" + token.symbol,
-          "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21",
-          "WTokenShark",
-          "WSHARK",
-          transfer.amount.toString()
-        );
-
-        //token.token_address
-        let wtoken = await bridge.functions.tokenToWrappedToken(
-          "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21"
-        );
-        receivedToken = wtoken;
-      } else {
+      if (chainId == 11155111) {
         tx = await bridge.functions.unlock(
           transfer.token,
           transfer.amount.toString(),
@@ -95,6 +84,24 @@ const TransferCard = ({ transfer }) => {
           }
         );
         receivedToken = transfer.token;
+      } else if (chainId == 80001) {
+        tx = await bridge.functions.mint(
+          token.token_address,
+          "W" + token.name,
+          "W" + token.symbol,
+          // "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21",
+          // "WTokenShark",
+          // "WSHARK",
+          transfer.amount.toString()
+        );
+
+        //"0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21"
+        let wtoken = await bridge.functions.tokenToWrappedToken(
+          token.token_address
+        );
+        receivedToken = wtoken;
+      } else {
+        throw new Error("Invalid chain");
       }
 
       await tx.wait();

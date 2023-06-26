@@ -22,10 +22,10 @@ const Transfer = () => {
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
-      //startMoralis();
-      //getTokens();
+      startMoralis();
+      getTokens();
     }
-  }, []);
+  }, [chainId]);
 
   useEffect(() => {
     populateTokenSelect();
@@ -137,8 +137,8 @@ const Transfer = () => {
 
       let formData = new FormData(e.target);
       let to = formData.get("to");
-      //let token = formData.get("token");
-      let token = "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21";
+      let token = formData.get("token");
+      //let token = "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21";
       let amount = formData.get("amount");
 
       let tx;
@@ -177,7 +177,7 @@ const Transfer = () => {
             maxPriorityFeePerGas: BigNumber.from(feeData.maxPriorityFeePerGas),
           }
         );
-      } else {
+      } else if (chainId == 80001) {
         const wtoken = await bridge.tokenToWrappedToken(token);
 
         const tokenContract = new ethers.Contract(
@@ -207,6 +207,8 @@ const Transfer = () => {
           ethers.utils.parseUnits(amount, 18),
           signatureData
         );
+      } else {
+        throw new Error("Invalid chain");
       }
 
       e.target.reset();
@@ -242,43 +244,45 @@ const Transfer = () => {
       <h1 className="mb-3 flex items-center justify-center font-bold text-xl">
         Transfer
       </h1>
-      <form onSubmit={depositToBridge}>
-        <div className="mb-6">
-          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
-            To
-          </label>
-          <input
-            type="text"
-            id="to"
-            name="to"
-            className="w-1/4 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          ></input>
-        </div>
-        <div className="inline-block relative w-64 mb-6">
-          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
-            Token
-          </label>
-          <select
-            name="token"
-            id="token"
-            className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
-          ></select>
-        </div>
-        <div className="mb-6">
-          <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
-            Amount
-          </label>
-          <input
-            type="text"
-            id="amount"
-            name="amount"
-            className="w-1/8 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          ></input>
-        </div>
-        <button className="shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded">
-          SEND
-        </button>
-      </form>
+      <div className="mb-3 flex items-center justify-center ">
+        <form onSubmit={depositToBridge}>
+          <div className="mb-6">
+            <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+              To
+            </label>
+            <input
+              type="text"
+              id="to"
+              name="to"
+              className="w-96 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            ></input>
+          </div>
+          <div className="inline-block relative w-64 mb-6">
+            <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+              Token
+            </label>
+            <select
+              name="token"
+              id="token"
+              className="inline appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+            ></select>
+          </div>
+          <div className="mb-6">
+            <label className="inline text-gray-700 text-sm font-bold mb-2 mr-2">
+              Amount
+            </label>
+            <input
+              type="text"
+              id="amount"
+              name="amount"
+              className="w-1/8 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            ></input>
+          </div>
+          <button className="ml-28 shadow bg-orange-500 hover:bg-orange-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded">
+            SEND
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
