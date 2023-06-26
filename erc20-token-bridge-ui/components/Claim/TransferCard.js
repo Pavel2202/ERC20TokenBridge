@@ -20,10 +20,13 @@ const TransferCard = ({ transfer }) => {
   const [tokens, setTokens] = useState({});
 
   useEffect(() => {
+    startMoralis();
+    getTokens();
+  }, []);
+
+  useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
-      startMoralis();
-      getTokens();
     }
   }, [chainId]);
 
@@ -89,13 +92,9 @@ const TransferCard = ({ transfer }) => {
           token.token_address,
           "W" + token.name,
           "W" + token.symbol,
-          // "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21",
-          // "WTokenShark",
-          // "WSHARK",
           transfer.amount.toString()
         );
 
-        //"0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21"
         let wtoken = await bridge.functions.tokenToWrappedToken(
           token.token_address
         );

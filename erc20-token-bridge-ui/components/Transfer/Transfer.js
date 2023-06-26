@@ -20,10 +20,13 @@ const Transfer = () => {
   const [tokens, setTokens] = useState({});
 
   useEffect(() => {
+    startMoralis();
+    getTokens();
+  }, []);
+
+  useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       setProvider(new ethers.providers.Web3Provider(window.ethereum));
-      startMoralis();
-      getTokens();
     }
   }, [chainId]);
 
@@ -138,7 +141,6 @@ const Transfer = () => {
       let formData = new FormData(e.target);
       let to = formData.get("to");
       let token = formData.get("token");
-      //let token = "0xEF432827A7F0B0bE03c36B1104E5A3e1081D3D21";
       let amount = formData.get("amount");
 
       let tx;

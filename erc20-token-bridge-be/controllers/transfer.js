@@ -10,7 +10,7 @@ router.get("/pages", async (req, res) => {
   const result = await Transfer.find({
     to: new RegExp("\\b" + account + "\\b", "i"),
   })
-    .find({ toBridge: chainId })
+    .find({ toBridgeChainId: chainId })
     .find({ isClaimed: req.query.claimed })
     .sort([["_id", -1]]);
 
@@ -26,7 +26,7 @@ router.get("/transfers", async (req, res) => {
   const result = await Transfer.find({
     to: new RegExp("\\b" + account + "\\b", "i"),
   })
-    .find({ toBridge: chainId })
+    .find({ toBridgeChainId: chainId })
     .find({ isClaimed: req.query.claimed })
     .sort([["_id", -1]])
     .skip(startFrom)
