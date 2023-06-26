@@ -24,15 +24,13 @@ const polygonBridge = new ethers.Contract(
 
 const listener = async () => {
   await ethBridge.on("Locked", async (from, to, token, amount) => {
-    console.log("locked");
-
     const data = {
       from: from.toLowerCase(),
       to: to.toLowerCase(),
       token: token,
       wrappedToken: null,
-      fromBridge: "Sepolia",
-      toBridge: "Mumbai",
+      fromBridge: "11155111",
+      toBridge: "80001",
       amount: amount,
       isClaimed: false,
     };
@@ -44,15 +42,13 @@ const listener = async () => {
   await polygonBridge.on(
     "Burned",
     async (from, to, wrappedToken, token, amount) => {
-      console.log("burned");
-
       const data = {
         from: from,
         to: to,
         token: token,
         wrappedToken: wrappedToken,
-        fromBridge: "Mumbai",
-        toBridge: "Sepolia",
+        fromBridge: "80001",
+        toBridge: "11155111",
         amount: amount,
         isClaimed: false,
       };

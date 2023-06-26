@@ -178,7 +178,6 @@ const Transfer = () => {
         );
       } else {
         const wtoken = await bridge.tokenToWrappedToken(token);
-        console.log(wtoken);
 
         const tokenContract = new ethers.Contract(
           wtoken,

@@ -7,7 +7,7 @@ const TransferList = ({ transfers }) => {
         transfers.map((x) => <TransferCard key={x._id} transfer={x} />)
       ) : (
         <div>
-          <p className="mb-3flex items-stretch justify-center">No transfers</p>
+          <p className="mb-3 flex items-stretch justify-center">No transfers</p>
         </div>
       )}
     </div>

@@ -4,10 +4,10 @@ const transferSchema = new Schema({
   from: { type: String },
   to: { type: String },
   token: { type: String },
-  wrappedToken: {type: String},
-  fromBridge: {type: String},
-  toBridge: {type: String},
-  amount: { type: Number },
+  wrappedToken: { type: String },
+  fromBridge: { type: String },
+  toBridge: { type: String },
+  amount: { type: String },
   isClaimed: { type: Boolean },
 });
 

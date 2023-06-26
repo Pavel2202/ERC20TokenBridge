@@ -10,7 +10,6 @@ const History = () => {
   const router = useRouter();
   const { chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
-  const chainName = chainId == 80001 ? "Mumbai" : "Sepolia";
 
   const [tranfers, setTransfers] = useState([]);
   const [pages, setPages] = useState(0);
@@ -19,7 +18,7 @@ const History = () => {
 
   useEffect(() => {
     fetch(
-      `${baseUrl}/pages/?chainName=${chainName}&account=${account}&claimed=true`
+      `${baseUrl}/pages/?chainId=${chainId.toString()}&account=${account}&claimed=true`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -35,7 +34,7 @@ const History = () => {
 
   useEffect(() => {
     fetch(
-      `${baseUrl}/transfers/?page=${pageNumber}&chainName=${chainName}&account=${account}&claimed=true`
+      `${baseUrl}/transfers/?page=${pageNumber}&chainId=${chainId.toString()}&account=${account}&claimed=true`
     )
       .then((res) => res.json())
       .then((data) => {

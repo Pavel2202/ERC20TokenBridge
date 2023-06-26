@@ -4,13 +4,13 @@ const Transfer = require("../models/Transfer");
 const perPage = 10;
 
 router.get("/pages", async (req, res) => {
-  const chainName = req.query.chainName;
+  const chainId = req.query.chainId;
   const account = req.query.account;
 
   const result = await Transfer.find({
     to: new RegExp("\\b" + account + "\\b", "i"),
   })
-    .find({ toBridge: chainName })
+    .find({ toBridge: chainId })
     .find({ isClaimed: req.query.claimed })
     .sort([["_id", -1]]);
 
@@ -20,13 +20,13 @@ router.get("/pages", async (req, res) => {
 router.get("/transfers", async (req, res) => {
   const page = req.query.page == "undefined" ? 1 : req.query.page;
   const startFrom = (page - 1) * perPage;
-  const chainName = req.query.chainName;
-  const account = req.query.account;
+  const chainId = req.query.chainId;
 
+  const account = req.query.account;
   const result = await Transfer.find({
     to: new RegExp("\\b" + account + "\\b", "i"),
   })
-    .find({ toBridge: chainName })
+    .find({ toBridge: chainId })
     .find({ isClaimed: req.query.claimed })
     .sort([["_id", -1]])
     .skip(startFrom)

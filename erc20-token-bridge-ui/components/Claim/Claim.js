@@ -10,7 +10,6 @@ const Claim = () => {
   const router = useRouter();
   const { chainId: chainIdHex } = useMoralis();
   const chainId = parseInt(chainIdHex);
-  const chainName = chainId == 80001 ? "Mumbai" : "Sepolia";
 
   const [tranfers, setTransfers] = useState([]);
   const [pages, setPages] = useState(0);
@@ -19,7 +18,7 @@ const Claim = () => {
 
   useEffect(() => {
     fetch(
-      `${baseUrl}/pages/?chainName=${chainName}&account=${account}&claimed=false`
+      `${baseUrl}/pages/?chainId=${chainId}&account=${account}&claimed=false`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -35,7 +34,7 @@ const Claim = () => {
 
   useEffect(() => {
     fetch(
-      `${baseUrl}/transfers/?page=${pageNumber}&chainName=${chainName}&account=${account}&claimed=false`
+      `${baseUrl}/transfers/?page=${pageNumber}&chainId=${chainId}&account=${account}&claimed=false`
     )
       .then((res) => res.json())
       .then((data) => {
