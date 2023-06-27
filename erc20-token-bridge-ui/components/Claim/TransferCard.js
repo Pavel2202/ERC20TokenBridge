@@ -116,7 +116,6 @@ const TransferCard = ({ transfer }) => {
       e.target.textContent = "Claimed";
       handleSuccess(receivedTokenTemp);
     } catch (err) {
-      console.log(e);
       handleError(err.message);
       e.target.disabled = false;
       e.target.textContent = "Claim";
@@ -131,11 +130,11 @@ const TransferCard = ({ transfer }) => {
       position: "topR",
     });
 
+    alert("Click the 'Copy' button to get the received token address.");
     setReceivedToken(receivedTokenTemp);
   }
 
   async function copyToClipboard(e) {
-    console.log(receivedToken);
     await navigator.clipboard.writeText(receivedToken);
     alert("Copied token address: " + receivedToken);
   }

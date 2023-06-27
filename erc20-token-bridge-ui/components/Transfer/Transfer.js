@@ -217,7 +217,6 @@ const Transfer = () => {
       await tx.wait();
       handleSuccess(token);
     } catch (err) {
-      console.log(err.message);
       handleError(err.message);
     }
   }

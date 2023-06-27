@@ -25,7 +25,7 @@ const History = () => {
       .then((data) => {
         setPages(data);
       });
-  }, []);
+  }, [chainId]);
 
   useEffect(() => {
     const currentPage = router.query.page === undefined ? 1 : router.query.page;

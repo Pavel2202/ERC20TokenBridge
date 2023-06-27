@@ -5,6 +5,7 @@ const Pagination = ({ routeName, page, pagesCount }) => {
   const currentRoute = `/${routeName}/?page=${pageNumber}`;
   const nextRoute = `/${routeName}/?page=${pageNumber + 1}`;
   const previousRoute = `/${routeName}/?page=${pageNumber - 1}`;
+
   return (
     <div className="flex items-center">
       {pageNumber > 1 ? (
