@@ -25,8 +25,8 @@ const polygonBridge = new ethers.Contract(
 const listener = async () => {
   await ethBridge.on("Locked", async (from, to, token, amount) => {
     const data = {
-      from: from.toLowerCase(),
-      to: to.toLowerCase(),
+      from: from,
+      to: to,
       token: token,
       wrappedToken: null,
       fromBridgeChainId: "11155111",
